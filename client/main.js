@@ -27,108 +27,16 @@ function showForm(formToShow) {
     registerForm.style.display = 'none';
     forgotPasswordForm.style.display = 'none';
     resetPasswordForm.style.display = 'none';
+    authContainer.style.display = 'block';
+    gameContainer.style.display = 'none';
     formToShow.style.display = 'block';
 }
 
-showRegister.addEventListener('click', (e) => {
-    e.preventDefault();
-    showForm(registerForm);
-});
+function showGame() {
+    authContainer.style.display = 'none';
+    gameContainer.style.display = 'block';
+}
 
-showLoginFromRegister.addEventListener('click', (e) => {
-    e.preventDefault();
-    showForm(loginForm);
-});
-
-showForgotPassword.addEventListener('click', (e) => {
-    e.preventDefault();
-    showForm(forgotPasswordForm);
-});
-
-showLoginFromForgot.addEventListener('click', (e) => {
-    e.preventDefault();
-    showForm(loginForm);
-});
-
-const loginButton = document.getElementById('login-button');
-
-// Registration
-registerButton.addEventListener('click', async () => {
-    const email = document.getElementById('register-email').value;
-    const password = document.getElementById('register-password').value;
-
-    const response = await fetch('/auth/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-    });
-
-    if (response.ok) {
-        alert('Registration successful! Please login.');
-        showLogin.click();
-    } else {
-        const data = await response.json();
-        alert(`Registration failed: ${data.message}`);
-    }
-});
-
-// Login
-loginButton.addEventListener('click', async () => {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-
-    const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-    });
-
-    if (response.ok) {
-        const { token } = await response.json();
-        localStorage.setItem('token', token);
-        authContainer.style.display = 'none';
-        gameContainer.style.display = 'block';
-        initializeGame(token);
-    } else {
-        const data = await response.json();
-        alert(`Login failed: ${data.message}`);
-    }
-});
-
-// Forgot Password
-forgotButton.addEventListener('click', async () => {
-    const email = document.getElementById('forgot-email').value;
-    const response = await fetch('/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-    });
-    const data = await response.json();
-    alert(data.message);
-    if (response.ok) {
-        showForm(resetPasswordForm);
-    }
-});
-
-// Reset Password
-resetButton.addEventListener('click', async () => {
-    const token = document.getElementById('reset-token').value;
-    const password = document.getElementById('reset-password').value;
-    const response = await fetch('/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
-    });
-    const data = await response.json();
-    alert(data.message);
-    if (response.ok) {
-        showForm(loginForm);
-    }
-});
 
 
 // Game Logic (to be initialized after login)
@@ -148,6 +56,14 @@ function initializeGame(token) {
     socket.on('connect', () => {
         myId = socket.id;
         console.log('Connecté au serveur avec l-ID:', myId);
+    });
+
+    socket.on('connect_error', (err) => {
+        if (err.message === 'Authentication error') {
+            console.error('Authentication failed, please log in again.');
+            localStorage.removeItem('token');
+            showForm(loginForm);
+        }
     });
 
     socket.on('currentState', (allPlayers) => {
@@ -217,3 +133,89 @@ function initializeGame(token) {
     // 4. Démarrage de la boucle d'animation avec notre logique de jeu
     ThreeScene.animate(gameLogic);
 }
+
+// --- Main Execution ---
+function main() {
+    // Setup form event listeners
+    showRegister.addEventListener('click', (e) => { e.preventDefault(); showForm(registerForm); });
+    showLoginFromRegister.addEventListener('click', (e) => { e.preventDefault(); showForm(loginForm); });
+    showForgotPassword.addEventListener('click', (e) => { e.preventDefault(); showForm(forgotPasswordForm); });
+    showLoginFromForgot.addEventListener('click', (e) => { e.preventDefault(); showForm(loginForm); });
+
+    // Setup button event listeners
+    registerButton.addEventListener('click', async () => {
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const response = await fetch('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        if (response.ok) {
+            alert('Registration successful! Please login.');
+            showForm(loginForm);
+        } else {
+            const data = await response.json();
+            alert(`Registration failed: ${data.message}`);
+        }
+    });
+
+    loginButton.addEventListener('click', async () => {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        if (response.ok) {
+            const { token } = await response.json();
+            localStorage.setItem('token', token);
+            showGame();
+            initializeGame(token);
+        } else {
+            const data = await response.json();
+            alert(`Login failed: ${data.message}`);
+        }
+    });
+
+    forgotButton.addEventListener('click', async () => {
+        const email = document.getElementById('forgot-email').value;
+        const response = await fetch('/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        const data = await response.json();
+        alert(data.message);
+        if (response.ok) {
+            showForm(resetPasswordForm);
+        }
+    });
+
+    resetButton.addEventListener('click', async () => {
+        const token = document.getElementById('reset-token').value;
+        const password = document.getElementById('reset-password').value;
+        const response = await fetch('/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, password }),
+        });
+        const data = await response.json();
+        alert(data.message);
+        if (response.ok) {
+            showForm(loginForm);
+        }
+    });
+
+    // Check for existing token on page load
+    const token = localStorage.getItem('token');
+    if (token) {
+        showGame();
+        initializeGame(token);
+    } else {
+        showForm(loginForm);
+    }
+}
+
+main();
