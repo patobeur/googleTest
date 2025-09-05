@@ -4,13 +4,21 @@ const http = require('http');
 const path = require('path');
 const express = require('express');
 const socketIO = require('socket.io');
-const { initGame } = require('./game.js'); // Importer la logique de jeu
+const bodyParser = require('body-parser');
+const { initGame } = require('./game.js');
+const { initializeDatabase } = require('./db.js');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
 const PORT = process.env.PORT || 3000;
+
+// Initialiser la base de données
+initializeDatabase();
+
+// Middleware
+app.use(bodyParser.json());
 
 // Servir les fichiers statiques du client
 const clientPath = path.join(__dirname, '../client');
@@ -20,6 +28,10 @@ app.use(express.static(clientPath));
 app.get('/', (req, res) => {
   res.sendFile(path.join(clientPath, 'index.html'));
 });
+
+// Routes d'authentification
+const authRoutes = require('./auth');
+app.use('/auth', authRoutes);
 
 // Initialiser la logique de jeu en lui passant l'instance io
 initGame(io);

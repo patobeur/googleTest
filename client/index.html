@@ -5,6 +5,39 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="auth-container">
+        <div id="login-form">
+            <h2>Login</h2>
+            <input type="email" id="login-email" placeholder="Email">
+            <input type="password" id="login-password" placeholder="Password">
+            <button id="login-button">Login</button>
+            <p><a href="#" id="show-forgot-password">Forgot password?</a></p>
+            <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
+        </div>
+        <div id="register-form" style="display: none;">
+            <h2>Register</h2>
+            <input type="email" id="register-email" placeholder="Email">
+            <input type="password" id="register-password" placeholder="Password">
+            <button id="register-button">Register</button>
+            <p>Already have an account? <a href="#" id="show-login-from-register">Login</a></p>
+        </div>
+        <div id="forgot-password-form" style="display: none;">
+            <h2>Forgot Password</h2>
+            <input type="email" id="forgot-email" placeholder="Email">
+            <button id="forgot-button">Send Reset Token</button>
+            <p><a href="#" id="show-login-from-forgot">Back to Login</a></p>
+        </div>
+        <div id="reset-password-form" style="display: none;">
+            <h2>Reset Password</h2>
+            <input type="text" id="reset-token" placeholder="Reset Token">
+            <input type="password" id="reset-password" placeholder="New Password">
+            <button id="reset-button">Reset Password</button>
+        </div>
+    </div>
+    <div id="game-container" style="display: none;">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="main.js"></script>

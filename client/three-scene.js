@@ -7,16 +7,15 @@ const players = {}; // Stocke les objets 3D des joueurs
 let scene, camera, renderer;
 
 // Initialise la scène, la caméra, le rendu et les lumières.
-function init() {
+function init(canvas) {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x222222);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
     camera.position.z = 500;
 
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
     const light = new THREE.AmbientLight(0xffffff);
     scene.add(light);
