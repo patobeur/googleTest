@@ -16,6 +16,7 @@ const showLoginFromRegister = document.getElementById('show-login-from-register'
 const showForgotPassword = document.getElementById('show-forgot-password');
 const showLoginFromForgot = document.getElementById('show-login-from-forgot');
 
+const loginButton = document.getElementById('login-button');
 const registerButton = document.getElementById('register-button');
 const forgotButton = document.getElementById('forgot-button');
 const resetButton = document.getElementById('reset-button');
