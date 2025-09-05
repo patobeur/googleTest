@@ -16,7 +16,7 @@ router.post('/register', async (req, res) => {
         return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const existingUser = await getUserByEmail(email);
+    const existingUser = getUserByEmail(email);
     if (existingUser) {
         return res.status(400).json({ message: 'User already exists' });
     }
@@ -28,7 +28,7 @@ router.post('/register', async (req, res) => {
         password: hashedPassword
     };
 
-    await createUser(newUser);
+    createUser(newUser);
 
     res.status(201).json({ message: 'User created successfully' });
 });
@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
         return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await getUserByEmail(email);
+    const user = getUserByEmail(email);
     if (!user) {
         return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -56,9 +56,9 @@ router.post('/login', async (req, res) => {
 });
 
 // Route de mot de passe oublié
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', (req, res) => {
     const { email } = req.body;
-    const user = await getUserByEmail(email);
+    const user = getUserByEmail(email);
     if (!user) {
         return res.status(400).json({ message: 'User not found' });
     }
@@ -67,7 +67,7 @@ router.post('/forgot-password', async (req, res) => {
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
-    await updateUser(user);
+    updateUser(user);
 
     // Simuler l'envoi d'un email
     console.log('---- PASSWORD RESET EMAIL ----');
@@ -82,7 +82,7 @@ router.post('/forgot-password', async (req, res) => {
 // Route de réinitialisation du mot de passe
 router.post('/reset-password', async (req, res) => {
     const { token, password } = req.body;
-    const user = await getUserByResetToken(token);
+    const user = getUserByResetToken(token);
 
     if (!user) {
         return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
@@ -93,7 +93,7 @@ router.post('/reset-password', async (req, res) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
-    await updateUser(user);
+    updateUser(user);
 
     res.json({ message: 'Password has been reset' });
 });

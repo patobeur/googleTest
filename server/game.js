@@ -20,10 +20,10 @@ function initGame(io) {
         });
     });
 
-    io.on('connection', async (socket) => {
+    io.on('connection', (socket) => {
         console.log('Un nouveau joueur est connecté:', socket.id, 'avec le userId:', socket.userId);
 
-        let player = await getPlayerByUserId(socket.userId);
+        let player = getPlayerByUserId(socket.userId);
         if (!player) {
             player = {
                 id: socket.id,
@@ -32,7 +32,7 @@ function initGame(io) {
                 y: Math.floor(Math.random() * 400) + 50,
                 color: `hsl(${Math.random() * 360}, 100%, 50%)`
             };
-            await createPlayer(player);
+            createPlayer(player);
         } else {
             player.id = socket.id; // Update socket id
         }
@@ -42,9 +42,9 @@ function initGame(io) {
         socket.emit('currentState', players);
         socket.broadcast.emit('newPlayer', player);
 
-        socket.on('disconnect', async () => {
+        socket.on('disconnect', () => {
             console.log('Un joueur s\'est déconnecté:', socket.id);
-            await updatePlayer(players[socket.id]);
+            updatePlayer(players[socket.id]);
             delete players[socket.id];
             io.emit('playerDisconnected', socket.id);
         });
