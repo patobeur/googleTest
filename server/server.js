@@ -1,12 +1,12 @@
 // server/server.js
 
-const http = require('http');
-const path = require('path');
-const express = require('express');
-const socketIO = require('socket.io');
-const bodyParser = require('body-parser');
-const { initGame } = require('./game.js');
-const { initializeDatabase } = require('./db.js');
+const http = require("http");
+const path = require("path");
+const express = require("express");
+const socketIO = require("socket.io");
+const bodyParser = require("body-parser");
+const { initGame } = require("./game.js");
+const { initializeDatabase } = require("./db.js");
 
 const app = express();
 const server = http.createServer(app);
@@ -21,21 +21,23 @@ initializeDatabase();
 app.use(bodyParser.json());
 
 // Servir les fichiers statiques du client
-const clientPath = path.join(__dirname, '../client');
+const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
 
 // Route pour la page d'accueil
-app.get('/', (req, res) => {
-  res.sendFile(path.join(clientPath, 'index.html'));
+app.get("/", (req, res) => {
+	res.sendFile(path.join(clientPath, "index.html"));
 });
 
 // Routes d'authentification
-const authRoutes = require('./auth');
-app.use('/auth', authRoutes);
+const authRoutes = require("./auth");
+app.use("/auth", authRoutes);
 
 // Initialiser la logique de jeu en lui passant l'instance io
 initGame(io);
 
 server.listen(PORT, () => {
-  console.log(`Le serveur de jeu est lancé sur le port ${PORT}`);
+	console.log(
+		`Le serveur de jeu est lancé sur le port http://localhost:${PORT}`
+	);
 });
