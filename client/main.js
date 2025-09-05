@@ -36,6 +36,14 @@ socket.on('playerDisconnected', (id) => {
     ThreeScene.removePlayer(id);
 });
 
+// Le serveur nous renvoie à notre dernière position valide
+socket.on('correction', (lastValidPosition) => {
+    console.log('Correction de position reçue du serveur.');
+    // On met à jour la position de notre joueur avec les données du serveur
+    const correctedPlayerInfo = { id: myId, ...lastValidPosition };
+    ThreeScene.updatePlayerPosition(correctedPlayerInfo);
+});
+
 // 3. Logique de jeu principale
 const playerSpeed = 5;
 
