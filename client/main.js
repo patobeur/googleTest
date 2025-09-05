@@ -128,6 +128,10 @@ function initializeGame(token) {
                     y: playerObject.position.y,
                 });
             }
+
+            // Mise à jour de la caméra pour suivre le joueur et gérer le zoom
+            ThreeScene.updateCamera(playerObject, UserInput.zoomDelta);
+            UserInput.resetZoom(); // Réinitialise le zoom pour qu'il ne s'applique qu'une fois
         }
     }
 

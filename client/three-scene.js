@@ -12,7 +12,8 @@ function init(canvas) {
     scene.background = new THREE.Color(0x222222);
 
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    camera.position.z = 500;
+    // La position Z est maintenant gérée par updateCamera
+    camera.position.z = 500; // Valeur de départ par défaut
 
     renderer = new THREE.WebGLRenderer({ canvas });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -25,9 +26,11 @@ function init(canvas) {
 
 // Gère le redimensionnement de la fenêtre
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    if (!camera || !renderer) return;
+    const canvas = renderer.domElement;
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    // Pas besoin de redimensionner le renderer ici si le canevas est géré par CSS
 }
 
 // La boucle d'animation
@@ -79,6 +82,27 @@ function removePlayer(id) {
     }
 }
 
+// Met à jour la caméra pour suivre le joueur et gérer le zoom
+function updateCamera(player, zoomDelta) {
+    if (!camera || !player) return;
+
+    // Suivi du joueur
+    camera.position.x = player.position.x;
+    camera.position.y = player.position.y;
+
+    // Gestion du zoom
+    const zoomSpeed = 20;
+    const minZoom = 200;
+    const maxZoom = 800;
+
+    // Applique le zoom en fonction du delta de la molette
+    camera.position.z -= zoomDelta * zoomSpeed;
+
+    // Bloque le zoom dans les limites définies
+    camera.position.z = Math.max(minZoom, Math.min(maxZoom, camera.position.z));
+}
+
+
 // Exporte les fonctions pour les rendre utilisables par d'autres modules
 export const ThreeScene = {
     init,
@@ -86,6 +110,7 @@ export const ThreeScene = {
     addPlayer,
     updatePlayerPosition,
     removePlayer,
+    updateCamera,
     // Expose l'objet players pour que la logique de jeu puisse y accéder
     players
 };
