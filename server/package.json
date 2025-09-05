@@ -1,0 +1,12 @@
+{
+  "name": "gauntlet-server",
+  "version": "1.0.0",
+  "description": "Gauntlet game server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.2"
+  }
+}
