@@ -1,9 +1,14 @@
-// client/three-scene.js
-
-// Ce module gère la scène 3D avec Three.js
+import * as THREE from "three";
 
 const players = {}; // Stocke les objets 3D des joueurs
-
+let conf = {
+	camera: {
+		z: 300,
+		zoomSpeed: 20,
+		minZoom: 200,
+		maxZoom: 800,
+	},
+};
 let scene, camera, renderer;
 
 // Initialise la scène, la caméra, le rendu et les lumières.
@@ -12,13 +17,12 @@ function init(canvas) {
 	scene.background = new THREE.Color(0x222222);
 
 	camera = new THREE.PerspectiveCamera(
-		75,
+		60,
 		canvas.clientWidth / canvas.clientHeight,
 		0.1,
 		1000
 	);
-	// La position Z est maintenant gérée par updateCamera
-	camera.position.z = 500; // Valeur de départ par défaut
+	camera.position.z = conf.camera.z; // Valeur de départ par défaut
 
 	renderer = new THREE.WebGLRenderer({ canvas });
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -26,36 +30,36 @@ function init(canvas) {
 	const light = new THREE.AmbientLight(0xffffff);
 	scene.add(light);
 
+	addCenteredCube();
+
 	window.addEventListener("resize", onWindowResize, false);
 
 	onWindowResize();
+	console.log("scene on");
+
+	const grid = new THREE.GridHelper(5000, 5000 / 10, 0x666666, 0x444444);
+	grid.rotateX(Math.PI / 2);
+	scene.add(grid);
 }
 
-// Gère le redimensionnement de la fenêtre
 function onWindowResize() {
 	if (!camera || !renderer) return;
 	const canvas = renderer.domElement;
-	// camera.aspect = canvas.clientWidth / canvas.clientHeight;
-	// camera.updateProjectionMatrix();
-	// Pas besoin de redimensionner le renderer ici si le canevas est géré par CSS
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// La boucle d'animation
-let gameLogicCallback = () => {}; // Logique de jeu à exécuter
+let gameLogicCallback = () => {};
 
 function renderLoop() {
 	requestAnimationFrame(renderLoop);
 
-	// Exécute la logique de jeu
 	gameLogicCallback();
 
 	renderer.render(scene, camera);
 }
 
-// Démarre la boucle d'animation avec la logique de jeu fournie
 function animate(gameLogic) {
 	if (gameLogic) {
 		gameLogicCallback = gameLogic;
@@ -63,20 +67,34 @@ function animate(gameLogic) {
 	renderLoop();
 }
 
-// Ajoute un joueur (un cube) à la scène
 function addPlayer(playerInfo) {
-	const geometry = new THREE.BoxGeometry(30, 30, 30);
+	const geometry = new THREE.BoxGeometry(10, 10, 10);
 	const material = new THREE.MeshStandardMaterial({ color: playerInfo.color });
 	const playerCube = new THREE.Mesh(geometry, material);
 
-	playerCube.position.x = playerInfo.x;
-	playerCube.position.y = playerInfo.y;
+	// next to come
+	const PlayerGroup = new THREE.Group();
+	PlayerGroup.add(playerCube);
+	PlayerGroup.position.x = playerInfo.x;
+	PlayerGroup.position.y = playerInfo.y;
 
-	players[playerInfo.id] = playerCube;
-	scene.add(playerCube);
+	players[playerInfo.id] = PlayerGroup;
+
+	scene.add(PlayerGroup);
 }
 
-// Met à jour la position d'un joueur existant
+function addCenteredCube() {
+	const geometry = new THREE.BoxGeometry(1, 1, 1);
+	const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+	const cube = new THREE.Mesh(geometry, material);
+
+	cube.position.x = 0;
+	cube.position.y = 0;
+	cube.position.z = 0.5;
+
+	scene.add(cube);
+}
+
 function updatePlayerPosition(playerInfo) {
 	if (players[playerInfo.id]) {
 		players[playerInfo.id].position.x = playerInfo.x;
@@ -84,7 +102,6 @@ function updatePlayerPosition(playerInfo) {
 	}
 }
 
-// Supprime un joueur de la scène
 function removePlayer(id) {
 	if (players[id]) {
 		scene.remove(players[id]);
@@ -92,34 +109,28 @@ function removePlayer(id) {
 	}
 }
 
-// Met à jour la caméra pour suivre le joueur et gérer le zoom
-function updateCamera(player, zoomDelta) {
+function updateKamera(myId, zoomDelta) {
+	let player = players[myId];
 	if (!camera || !player) return;
 
-	// Suivi du joueur
 	camera.position.x = player.position.x;
 	camera.position.y = player.position.y;
 
-	// Gestion du zoom
-	const zoomSpeed = 20;
-	const minZoom = 200;
-	const maxZoom = 800;
+	camera.position.z += zoomDelta * conf.camera.zoomSpeed;
 
-	// Applique le zoom en fonction du delta de la molette
-	camera.position.z -= zoomDelta * zoomSpeed;
-
-	// Bloque le zoom dans les limites définies
-	camera.position.z = Math.max(minZoom, Math.min(maxZoom, camera.position.z));
+	camera.position.z = Math.max(
+		conf.camera.minZoom,
+		Math.min(conf.camera.maxZoom, camera.position.z)
+	);
 }
 
-// Exporte les fonctions pour les rendre utilisables par d'autres modules
 export const ThreeScene = {
 	init,
 	animate,
 	addPlayer,
 	updatePlayerPosition,
 	removePlayer,
-	updateCamera,
+	updateKamera,
 	// Expose l'objet players pour que la logique de jeu puisse y accéder
 	players,
 };

@@ -1,7 +1,215 @@
 body {
-    margin: 0;
-    overflow: hidden;
+	margin: 0;
+	overflow: hidden;
 }
 canvas {
-    display: block;
+	display: block;
+}
+
+/* --- THEMES --- */
+:root {
+	--bg-color-light: #ff7800;
+	--bg-input-color-light: #ffcb9e;
+	--text-color-light: #333;
+	--modal-bg-light: #fff;
+	--border-color-light: #ddd;
+
+	--bg-color-dark: #1a1a1a;
+	--bg-input-color-dark: #f0f0f0;
+	--text-color-dark: #f0f0f0;
+	--modal-bg-dark: #2c2c2c;
+	--border-color-dark: #444;
+}
+
+body.light-theme {
+	--bg-color: var(--bg-color-light);
+	--text-color: var(--text-color-light);
+	--modal-bg: var(--modal-bg-light);
+	--border-color: var(--border-color-light);
+	--bg-input-color: var(--bg-input-color-light);
+}
+
+body.dark-theme {
+	--bg-color: var(--bg-color-dark);
+	--text-color: var(--text-color-dark);
+	--modal-bg: var(--modal-bg-dark);
+	--border-color: var(--border-color-dark);
+	--bg-input-color: var(--bg-input-color-dark);
+}
+
+body {
+	background-color: var(--bg-color);
+	color: var(--text-color);
+	font-family: sans-serif;
+}
+
+/* --- AUTH --- */
+#auth-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100vh;
+	position: absolute;
+	width: 100vw;
+}
+
+#auth-container > div {
+	background-color: var(--modal-bg);
+	padding: 30px;
+	border-radius: 10px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	width: 100%;
+	max-width: 400px;
+	border: 1px solid var(--border-color);
+}
+#auth-container h2 {
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+#auth-container input {
+	width: 100%;
+	padding: 12px;
+	margin-bottom: 15px;
+	border-radius: 5px;
+	border: 1px solid var(--border-color);
+	background-color: var(--bg-input-color);
+	color: var(--text-color);
+	box-sizing: border-box;
+}
+
+#auth-container button {
+	width: 100%;
+	padding: 12px;
+	border: none;
+	border-radius: 5px;
+	background-color: #ff7b00;
+	color: white;
+	cursor: pointer;
+	font-size: 16px;
+	transition: background-color 0.3s;
+}
+
+#auth-container button:hover {
+	background-color: #00b300;
+}
+
+#auth-container p {
+	text-align: center;
+	margin-top: 20px;
+}
+
+#auth-container a {
+	color: #ffa600;
+	text-decoration: none;
+}
+
+#auth-container a:hover {
+	text-decoration: underline;
+}
+
+/* --- MENU --- */
+#menu-icon {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	cursor: pointer;
+	z-index: 1001;
+}
+
+#menu-icon .bar1,
+#menu-icon .bar2,
+#menu-icon .bar3 {
+	width: 35px;
+	height: 5px;
+	background-color: var(--text-color);
+	margin: 6px 0;
+	transition: 0.4s;
+}
+
+#menu-dropdown {
+	position: fixed;
+	top: 65px;
+	right: 20px;
+	background-color: var(--modal-bg);
+	border: 1px solid var(--border-color);
+	border-radius: 5px;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	z-index: 1000;
+}
+
+#menu-dropdown a {
+	color: var(--text-color);
+	padding: 12px 16px;
+	text-decoration: none;
+	display: block;
+}
+
+#menu-dropdown a:hover {
+	background-color: var(--bg-color);
+}
+
+/* --- MODALS --- */
+.modal {
+	position: fixed;
+	z-index: 1002;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.modal-content {
+	background-color: var(--modal-bg);
+	padding: 20px;
+	border: 1px solid var(--border-color);
+	border-radius: 10px;
+	width: 80%;
+	max-width: 500px;
+	max-height: 90vh;
+	overflow-y: auto;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.close-btn {
+	color: var(--text-color);
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+	color: #bbb;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+#profile-form label {
+	display: block;
+	margin: 10px 0 5px;
+}
+
+#profile-form input,
+#profile-form button {
+	width: 100%;
+	padding: 10px;
+	margin-bottom: 10px;
+	border-radius: 5px;
+	border: 1px solid var(--border-color);
+	background-color: var(--bg-color);
+	color: var(--text-color);
+	box-sizing: border-box;
+}
+
+#profile-form button {
+	background-color: #007bff;
+	color: white;
+	cursor: pointer;
 }
