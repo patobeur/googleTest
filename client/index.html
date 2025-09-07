@@ -92,7 +92,16 @@
 			</div>
 		</div>
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "/node_modules_min/three/build/three.module.js",
+					"three/addons/": "/node_modules_min/three/examples/jsm/"
+				}
+			}
+		</script>
+
+		<script src="/node_modules_min/three/examples/jsm/libs/ammo.wasm.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="module" src="main.js"></script>
 	</body>
