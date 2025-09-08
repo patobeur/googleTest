@@ -70,6 +70,7 @@ function initializeGame(token) {
 	});
 
 	socket.on("currentState", (allPlayers) => {
+		console.log("affiche de tout les joueur(euse)s");
 		for (let id in allPlayers) {
 			if (allPlayers.hasOwnProperty(id)) {
 				ThreeScene.addPlayer(allPlayers[id]);
@@ -130,7 +131,7 @@ function initializeGame(token) {
 			}
 
 			// Mise à jour de la caméra pour suivre le joueur et gérer le zoom
-			ThreeScene.updateKamera(myId, UserInput.zoomDelta);
+			ThreeScene.updateCamera(myId, UserInput.zoomDelta);
 			UserInput.resetZoom(); // Réinitialise le zoom pour qu'il ne s'applique qu'une fois
 		}
 	}
@@ -224,6 +225,7 @@ window.addEventListener("click", (e) => {
 
 // Profile form submission
 const profileForm = document.getElementById("profile-form");
+
 profileForm.addEventListener("submit", (e) => {
 	e.preventDefault();
 	const username = document.getElementById("profile-username").value;
@@ -335,15 +337,15 @@ function main() {
 
 window.addEventListener("load", () => {
 	// if (SOCKET) {
-	if (THREE) {
-		console.log("THREE ok");
-		if (Ammo) {
-			console.log("Ammo ok");
-			Ammo().then(() => {
-				console.log("start");
-				main();
-			});
-		}
-	}
+	// if (THREE) {
+	// 	console.log("THREE ok");
+	// 	if (Ammo) {
+	// 		console.log("Ammo ok");
+	// 		Ammo().then(() => {
+	// 			console.log("start");
+	main();
+	// 		});
+	// 	}
+	// }
 	// }
 });

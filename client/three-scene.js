@@ -1,5 +1,4 @@
 import * as THREE from "three";
-
 const players = {}; // Stocke les objets 3D des joueurs
 let conf = {
 	camera: {
@@ -9,7 +8,7 @@ let conf = {
 		maxZoom: 800,
 	},
 };
-let scene, camera, renderer;
+let scene, camera, renderer, camRig;
 
 // Initialise la scène, la caméra, le rendu et les lumières.
 function init(canvas) {
@@ -22,7 +21,14 @@ function init(canvas) {
 		0.1,
 		1000
 	);
-	camera.position.z = conf.camera.z; // Valeur de départ par défaut
+
+	// camera.position.z = conf.camera.z;
+
+	// Camera Rig
+	camRig = new THREE.Object3D();
+	camRig.add(camera);
+	camRig.position.z = conf.camera.z;
+	scene.add(camRig);
 
 	renderer = new THREE.WebGLRenderer({ canvas });
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -109,18 +115,18 @@ function removePlayer(id) {
 	}
 }
 
-function updateKamera(myId, zoomDelta) {
+function updateCamera(myId, zoomDelta) {
 	let player = players[myId];
 	if (!camera || !player) return;
 
-	camera.position.x = player.position.x;
-	camera.position.y = player.position.y;
+	camRig.position.x = player.position.x;
+	camRig.position.y = player.position.y;
 
-	camera.position.z += zoomDelta * conf.camera.zoomSpeed;
+	camRig.position.z += zoomDelta * conf.camera.zoomSpeed;
 
-	camera.position.z = Math.max(
+	camRig.position.z = Math.max(
 		conf.camera.minZoom,
-		Math.min(conf.camera.maxZoom, camera.position.z)
+		Math.min(conf.camera.maxZoom, camRig.position.z)
 	);
 }
 
@@ -130,7 +136,7 @@ export const ThreeScene = {
 	addPlayer,
 	updatePlayerPosition,
 	removePlayer,
-	updateKamera,
+	updateCamera,
 	// Expose l'objet players pour que la logique de jeu puisse y accéder
 	players,
 };
