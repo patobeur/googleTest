@@ -41,7 +41,12 @@ function createPlayer(player) {
 }
 
 function updatePlayer(player) {
-    db.get('players').find({ id: player.id }).assign(player).write();
+    if (!player || !player.userId) {
+        console.error("Attempted to update a player without a userId.", player);
+        return;
+    }
+    const { id, ...playerData } = player; // Don't save the ephemeral socket.id
+    db.get('players').find({ userId: player.userId }).assign(playerData).write();
 }
 
 module.exports = {

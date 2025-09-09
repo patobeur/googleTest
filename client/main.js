@@ -71,27 +71,52 @@ function initializeGame(token) {
 		ThreeScene.updatePlayerPosition(correctedPlayerInfo);
 	});
 
-    // A simple state to prevent sending data on every frame
-    const lastSentPosition = new THREE.Vector3();
-    const positionThreshold = 0.01; // Only send update if moved more than this
+    // State to prevent sending data on every frame
+    const lastSent = {
+        position: new THREE.Vector3(),
+        quaternion: new THREE.Quaternion(),
+        animation: "",
+    };
+    const thresholds = {
+        position: 0.01,
+        quaternion: 0.01,
+    };
 
 	function gameLogic() {
-        // The new game logic's only job is to send the local player's state to the server.
-        // The ThirdPersonController handles all the movement and camera logic.
-		if (myId && ThreeScene.players[myId] && ThreeScene.players[myId].character) {
-            const playerModel = ThreeScene.players[myId].character.model;
-            const currentPosition = playerModel.position;
+        // This function sends the local player's state to the server.
+		if (!myId || !ThreeScene.players[myId] || !ThreeScene.players[myId].character) {
+            return;
+        }
 
-            // Check if player has moved enough to warrant an update
-            if(currentPosition.distanceToSquared(lastSentPosition) > positionThreshold * positionThreshold) {
-                // Remember: the server still thinks Y is forward, so we send 'z' as 'y'.
-                socket.emit("playerMovement", {
-                    x: currentPosition.x,
-                    y: currentPosition.z,
-                });
-                lastSentPosition.copy(currentPosition);
-            }
-		}
+        const character = ThreeScene.players[myId].character;
+        const currentPosition = character.model.position;
+        const currentQuaternion = character.targetQuaternion;
+        const currentAnimation = character.currentAction ? character.currentAction.getClip().name.toLowerCase() : "";
+
+
+        const positionChanged = currentPosition.distanceToSquared(lastSent.position) > thresholds.position * thresholds.position;
+        const rotationChanged = !currentQuaternion.equals(lastSent.quaternion);
+        const animationChanged = currentAnimation !== lastSent.animation;
+
+        if (positionChanged || rotationChanged || animationChanged) {
+            const movementData = {
+                x: currentPosition.x,
+                y: currentPosition.z, // Server expects z as y
+                rotation: {
+                    x: currentQuaternion.x,
+                    y: currentQuaternion.y,
+                    z: currentQuaternion.z,
+                    w: currentQuaternion.w,
+                },
+                animation: currentAnimation,
+            };
+
+            socket.emit("playerMovement", movementData);
+
+            lastSent.position.copy(currentPosition);
+            lastSent.quaternion.copy(currentQuaternion);
+            lastSent.animation = currentAnimation;
+        }
 	}
 
 	ThreeScene.animate(gameLogic);

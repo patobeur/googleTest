@@ -18,9 +18,11 @@ class Character {
 		this.currentAction = null;
 		this.model = null;
 
-		// New properties for rotation
+		// New properties for rotation and position interpolation
 		this.targetQuaternion = new THREE.Quaternion();
+        this.targetPosition = new THREE.Vector3();
 		this.rotationSpeed = 0.1;
+        this.positionSpeed = 0.1;
 	}
 
 	load(modelUrl) {
@@ -38,8 +40,9 @@ class Character {
 				this.scene.add(model);
 				this.model = model;
 
-				// Initialize target quaternion to the model's initial rotation
+				// Initialize target quaternion and position to the model's initial state
 				this.targetQuaternion.copy(this.model.quaternion);
+                this.targetPosition.copy(this.model.position);
 
 				this.mixer = new THREE.AnimationMixer(this.model);
 				this._prepareAnimations();
@@ -114,14 +117,24 @@ class Character {
 			this.mixer.update(deltaTime);
 		}
 		if (this.model) {
-			// Smoothly interpolate the model's rotation
+			// Smoothly interpolate the model's rotation and position
 			this.model.quaternion.slerp(this.targetQuaternion, this.rotationSpeed);
+            this.model.position.lerp(this.targetPosition, this.positionSpeed);
 		}
 	}
+
+    setTargetPosition(x, y, z) {
+        this.targetPosition.set(x, y, z);
+    }
+
+    setTargetRotation(x, y, z, w) {
+        this.targetQuaternion.set(x, y, z, w);
+    }
 
 	setPosition(x, y, z) {
 		if (this.model) {
 			this.model.position.set(x, y, z);
+            this.targetPosition.set(x,y,z);
 		}
 	}
 }

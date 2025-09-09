@@ -102,31 +102,27 @@ function addPlayer(playerInfo) {
 }
 
 function updatePlayerPosition(playerInfo) {
-	// Only update remote players, local player is updated by its controller
-	if (playerInfo.id === localPlayerId) return;
+    // Only update remote players, local player is updated by its controller
+    if (playerInfo.id === localPlayerId) return;
 
-	const player = players[playerInfo.id];
-	if (player && player.character) {
-		const newPos = new THREE.Vector3(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
-		const oldPos = player.position.clone();
+    const player = players[playerInfo.id];
+    if (player && player.character) {
+        // Use the new methods on the Character class
+        player.character.setTargetPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
 
-		// Interpolate position for smooth movement
-		player.character.model.position.lerp(newPos, 0.1);
-		player.position.copy(player.character.model.position);
+        if (playerInfo.rotation) {
+            player.character.setTargetRotation(
+                playerInfo.rotation.x,
+                playerInfo.rotation.y,
+                playerInfo.rotation.z,
+                playerInfo.rotation.w
+            );
+        }
 
-		const direction = new THREE.Vector3().subVectors(newPos, oldPos);
-		if (direction.lengthSq() > 0.001) {
-			const targetAngle = Math.atan2(direction.x, direction.z);
-			const targetQuaternion = new THREE.Quaternion().setFromAxisAngle(
-				new THREE.Vector3(0, 1, 0),
-				targetAngle
-			);
-			player.character.model.quaternion.slerp(targetQuaternion, 0.1);
-			player.character.playAnimation("run");
-		} else {
-			player.character.playAnimation("idle");
-		}
-	}
+        if (playerInfo.animation) {
+            player.character.playAnimation(playerInfo.animation);
+        }
+    }
 }
 
 function removePlayer(id) {
