@@ -1,7 +1,5 @@
 // client/user-input.js
 
-// Ce module gère les entrées de l'utilisateur (clavier et souris)
-
 const keys = {
 	ArrowUp: false,
 	z: false,
@@ -16,6 +14,9 @@ const keys = {
 
 let zoomDelta = 0;
 let jumpPressed = false;
+let mouseDeltaX = 0;
+let mouseDeltaY = 0;
+let isMouseLocked = false;
 
 // Initialise les écouteurs d'événements
 function init() {
@@ -24,7 +25,6 @@ function init() {
 		if (keys.hasOwnProperty(event.key)) {
 			event.preventDefault();
 			if (event.key === " " && !keys[" "]) {
-				// Détecte un nouvel appui sur Espace
 				jumpPressed = true;
 			}
 			keys[event.key] = true;
@@ -43,16 +43,40 @@ function init() {
 		"wheel",
 		(event) => {
 			event.preventDefault();
-			// Normalise la valeur du zoom et ajoute un signe
 			zoomDelta += Math.sign(event.deltaY);
 		},
 		{ passive: false }
 	);
+
+	// Mouvement de la souris
+	document.addEventListener("mousemove", (event) => {
+		if (isMouseLocked) {
+			mouseDeltaX += event.movementX;
+			mouseDeltaY += event.movementY;
+		}
+	});
+
+	// Verrouillage du pointeur
+	const canvas = document.getElementById("game-canvas");
+	canvas.addEventListener("click", () => {
+		if (!isMouseLocked) {
+			canvas.requestPointerLock();
+		}
+	});
+
+	document.addEventListener("pointerlockchange", () => {
+		isMouseLocked = document.pointerLockElement === canvas;
+	});
 }
 
-// Fonction pour réinitialiser le delta du zoom après utilisation
+// Fonctions pour réinitialiser les deltas après utilisation
 function resetZoom() {
 	zoomDelta = 0;
+}
+
+function resetMouseDelta() {
+	mouseDeltaX = 0;
+	mouseDeltaY = 0;
 }
 
 // Exporte les états et les fonctions
@@ -64,8 +88,15 @@ export const UserInput = {
 	},
 	get jumpJustPressed() {
 		const pressed = jumpPressed;
-		jumpPressed = false; // Se réinitialise après lecture
+		jumpPressed = false;
 		return pressed;
 	},
+	get mouseDeltaX() {
+		return mouseDeltaX;
+	},
+	get mouseDeltaY() {
+		return mouseDeltaY;
+	},
 	resetZoom,
+	resetMouseDelta,
 };

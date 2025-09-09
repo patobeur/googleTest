@@ -1,17 +1,10 @@
 import * as THREE from "three";
 import { Character } from "./Character.js";
+import { Camera } from "./camera.js";
 
 const clock = new THREE.Clock();
 const players = {}; // Stocke les données des joueurs, y compris le modèle de personnage
-let conf = {
-	camera: {
-		z: 30,
-		zoomSpeed: 5,
-		minZoom: 20,
-		maxZoom: 80,
-	},
-};
-let scene, camera, renderer, camRig;
+let scene, renderer;
 let localPlayerId = null;
 
 function setLocalPlayerId(id) {
@@ -23,20 +16,7 @@ function init(canvas) {
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x222222);
 
-	camera = new THREE.PerspectiveCamera(
-		60,
-		canvas.clientWidth / canvas.clientHeight,
-		0.1,
-		1000
-	);
-
-	// camera.position.z = conf.camera.z;
-
-	// Camera Rig
-	camRig = new THREE.Object3D();
-	camRig.add(camera);
-	camRig.position.z = conf.camera.z;
-	scene.add(camRig);
+	Camera.init(canvas, scene);
 
 	renderer = new THREE.WebGLRenderer({ canvas });
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -47,7 +27,6 @@ function init(canvas) {
 	addCenteredCube();
 
 	window.addEventListener("resize", onWindowResize, false);
-
 	onWindowResize();
 	console.log("scene on");
 
@@ -57,10 +36,7 @@ function init(canvas) {
 }
 
 function onWindowResize() {
-	if (!camera || !renderer) return;
-	const canvas = renderer.domElement;
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
+	if (!renderer) return;
 	renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -79,7 +55,7 @@ function renderLoop() {
 
 	gameLogicCallback();
 
-	renderer.render(scene, camera);
+	renderer.render(scene, Camera.camera);
 }
 
 function animate(gameLogic) {
@@ -151,18 +127,9 @@ function removePlayer(id) {
 
 function updateCamera(myId, zoomDelta) {
 	const player = players[myId];
-	if (!camera || !player || !player.character) return;
-
-	// La caméra suit le modèle du personnage
-	camRig.position.x = player.position.x;
-	camRig.position.y = player.position.y;
-
-	camRig.position.z += zoomDelta * conf.camera.zoomSpeed;
-
-	camRig.position.z = Math.max(
-		conf.camera.minZoom,
-		Math.min(conf.camera.maxZoom, camRig.position.z)
-	);
+	if (player) {
+		Camera.update(player, zoomDelta);
+	}
 }
 
 function playLocalPlayerAnimation(animationName) {
