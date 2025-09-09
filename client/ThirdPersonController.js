@@ -54,27 +54,27 @@ class ThirdPersonController {
 		if (right) moveDirection.x = 1;
 		moveDirection.normalize();
 
-		// === 3. Update Player Position and Rotation ===
+		// === 3. Update Player Rotation ===
+		// The player's model should always face in the direction of the camera's yaw.
+		const targetQuaternion = new THREE.Quaternion();
+		targetQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.cameraEuler.y);
+		playerModel.quaternion.slerp(targetQuaternion, this.conf.player.rotationLerpSpeed);
+
+		// === 4. Update Player Position ===
 		if (moveDirection.lengthSq() > 0) {
-			// Rotate movement vector by camera's yaw
+			// Rotate movement vector by camera's yaw to make it camera-relative
 			moveDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.cameraEuler.y);
 
 			// Calculate new position
 			const moveVector = moveDirection.multiplyScalar(this.conf.player.speed * deltaTime);
 			playerModel.position.add(moveVector);
 
-			// Rotate player model to face movement direction
-			const targetQuaternion = new THREE.Quaternion();
-			const targetAngle = Math.atan2(moveDirection.x, moveDirection.z);
-			targetQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), targetAngle);
-			playerModel.quaternion.slerp(targetQuaternion, this.conf.player.rotationLerpSpeed);
-
-            this.character.playAnimation("run");
+			this.character.playAnimation("run");
 		} else {
-            this.character.playAnimation("idle");
-        }
+			this.character.playAnimation("idle");
+		}
 
-		// === 4. Update Camera Position and Target ===
+		// === 5. Update Camera Position and Target ===
 		// Update target position (what the camera looks at and orbits around)
 		this.target.position.lerp(playerModel.position, this.conf.camera.lerpSpeed);
 		this.target.quaternion.setFromEuler(this.cameraEuler);
