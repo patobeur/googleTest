@@ -39,7 +39,10 @@ class ThirdPersonController {
 		// === 1. Handle Camera Rotation from Mouse ===
 		this.cameraEuler.y -= UserInput.mouseDeltaX * this.conf.sensitivity;
 		this.cameraEuler.x -= UserInput.mouseDeltaY * this.conf.sensitivity;
-		this.cameraEuler.x = Math.max(-this.PI_2, Math.min(this.PI_2, this.cameraEuler.x)); // Clamp vertical rotation
+		this.cameraEuler.x = Math.max(
+			-this.PI_2,
+			Math.min(this.PI_2, this.cameraEuler.x)
+		); // Clamp vertical rotation
 
 		// === 2. Calculate Movement Direction ===
 		const forward = UserInput.keys.ArrowUp || UserInput.keys.z;
@@ -55,19 +58,35 @@ class ThirdPersonController {
 		moveDirection.normalize();
 
 		// === 3. Update Player Rotation ===
+		// this is still not working
 		// The player's model should always face in the direction of the camera's yaw.
 		// We set the character's target quaternion, and the character itself will handle the slerp.
 		const targetQuaternion = new THREE.Quaternion();
-		targetQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.cameraEuler.y);
-		this.character.targetQuaternion.copy(targetQuaternion);
+		// targetQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.cameraEuler.y);
+		// We add Math.PI to the camera's yaw to make the character face away from the camera.
+		targetQuaternion.setFromAxisAngle(
+			new THREE.Vector3(0, 1, 0),
+			this.cameraEuler.y + Math.PI
+		);
+		playerModel.quaternion.slerp(
+			targetQuaternion,
+			this.conf.player.rotationLerpSpeed
+		);
+
+		//this.character.targetQuaternion.copy(targetQuaternion);
 
 		// === 4. Update Player Position ===
 		if (moveDirection.lengthSq() > 0) {
 			// Rotate movement vector by camera's yaw to make it camera-relative
-			moveDirection.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.cameraEuler.y);
+			moveDirection.applyAxisAngle(
+				new THREE.Vector3(0, 1, 0),
+				this.cameraEuler.y
+			);
 
 			// Calculate new position
-			const moveVector = moveDirection.multiplyScalar(this.conf.player.speed * deltaTime);
+			const moveVector = moveDirection.multiplyScalar(
+				this.conf.player.speed * deltaTime
+			);
 			playerModel.position.add(moveVector);
 
 			this.character.playAnimation("run");
@@ -77,11 +96,15 @@ class ThirdPersonController {
 
 		// === 5. Update Camera Position and Target ===
 		// Update target position (what the camera looks at and orbits around)
-		this.target.position.lerp(playerModel.position, this.conf.camera.lerpSpeed);
+		this.target.position.lerp(
+			playerModel.position,
+			this.conf.camera.lerpSpeed
+		);
 		this.target.quaternion.setFromEuler(this.cameraEuler);
 
 		// Handle zoom
-		this.conf.camera.distance -= UserInput.zoomDelta * this.conf.camera.zoomSpeed;
+		this.conf.camera.distance -=
+			UserInput.zoomDelta * this.conf.camera.zoomSpeed;
 		this.conf.camera.distance = Math.max(
 			this.conf.camera.minZoom,
 			Math.min(this.conf.camera.maxZoom, this.conf.camera.distance)

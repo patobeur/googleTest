@@ -29,8 +29,12 @@ class Character {
 			modelUrl,
 			(gltf) => {
 				this.gltf = gltf;
-				// à l'origine le model gltf est tourné dans le mauvais sens. il est de face au lieu d'etre de dos. il faut le retourner avant de creer model
 				const model = clone(this.gltf.scene);
+
+				// à l'origine le model gltf est tourné dans le mauvais sens. il est de face au lieu d'etre de dos. il faut le retourner avant de creer model
+				// Rotate the model 180 degrees to face away from the camera
+				// model.rotation.y = Math.PI / 2;
+
 				this.scene.add(model);
 				this.model = model;
 
