@@ -97,7 +97,7 @@ class ThirdPersonController {
 		this.target.quaternion.setFromEuler(this.cameraEuler);
 
 		// Handle zoom
-		this.conf.camera.distance -=
+		this.conf.camera.distance +=
 			UserInput.zoomDelta * this.conf.camera.zoomSpeed;
 		this.conf.camera.distance = Math.max(
 			this.conf.camera.minZoom,
@@ -111,7 +111,11 @@ class ThirdPersonController {
 
 		// Lerp camera to the ideal position
 		this.camera.position.lerp(cameraPosition, this.conf.camera.lerpSpeed);
-		this.camera.lookAt(this.target.position);
+
+		// this.camera.lookAt(this.target.position);
+		const lookAtTarget = this.target.position.clone();
+		lookAtTarget.y += 1.5; // Ajoute un décalage vertical
+		this.camera.lookAt(lookAtTarget);
 
 		// Reset input deltas
 		UserInput.resetMouseDelta();
