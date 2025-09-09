@@ -1,5 +1,10 @@
 // server/server.js
+require("dotenv").config();
+["SMTP_PASS"].forEach((k) => {
+	if (!process.env[k]) throw new Error(`Variable manquante: ${k} (dans .env)`);
+});
 
+// console.log(DB_PASSWORD);
 const http = require("http");
 const path = require("path");
 const express = require("express");
