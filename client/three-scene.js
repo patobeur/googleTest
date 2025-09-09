@@ -80,22 +80,29 @@ function addPlayer(playerInfo) {
 		playerInfo.model === "female" ? "Kimono_Female.gltf" : "Kimono_Male.gltf";
 	const modelUrl = `/toon/${modelName}`;
 
-	const character = new Character(scene, (loadedCharacter) => {
-		loadedCharacter.setPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
+	// const character = new Character(scene, (loadedCharacter) => {
 
-		players[playerInfo.id] = {
-			...playerInfo,
-			character: loadedCharacter,
-			position: new THREE.Vector3(playerInfo.x, 0, playerInfo.y),
-		};
+	const isLocal = playerInfo.id === localPlayerId;
+	const character = new Character(scene, {
+		isLocal: isLocal,
+		onLoadCallback: (loadedCharacter) => {
+			loadedCharacter.setPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
 
-		if (playerInfo.id === localPlayerId) {
-			thirdPersonController = new ThirdPersonController({
-				camera: camera,
+			players[playerInfo.id] = {
+				...playerInfo,
 				character: loadedCharacter,
-				scene: scene,
-			});
-		}
+				position: new THREE.Vector3(playerInfo.x, 0, playerInfo.y),
+			};
+
+			// if (playerInfo.id === localPlayerId) {
+			if (isLocal) {
+				thirdPersonController = new ThirdPersonController({
+					camera: camera,
+					character: loadedCharacter,
+					scene: scene,
+				});
+			}
+		},
 	});
 
 	character.load(modelUrl);
@@ -107,24 +114,20 @@ function updatePlayerPosition(playerInfo) {
 
 	const player = players[playerInfo.id];
 	if (player && player.character) {
-		const newPos = new THREE.Vector3(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
-		const oldPos = player.position.clone();
+		// Use the new methods on the Character class
+		player.character.setTargetPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
 
-		// Interpolate position for smooth movement
-		player.character.model.position.lerp(newPos, 0.1);
-		player.position.copy(player.character.model.position);
-
-		const direction = new THREE.Vector3().subVectors(newPos, oldPos);
-		if (direction.lengthSq() > 0.001) {
-			const targetAngle = Math.atan2(direction.x, direction.z);
-			const targetQuaternion = new THREE.Quaternion().setFromAxisAngle(
-				new THREE.Vector3(0, 1, 0),
-				targetAngle
+		if (playerInfo.rotation) {
+			player.character.setTargetRotation(
+				playerInfo.rotation.x,
+				playerInfo.rotation.y,
+				playerInfo.rotation.z,
+				playerInfo.rotation.w
 			);
-			player.character.model.quaternion.slerp(targetQuaternion, 0.1);
-			player.character.playAnimation("run");
-		} else {
-			player.character.playAnimation("idle");
+		}
+
+		if (playerInfo.animation) {
+			player.character.playAnimation(playerInfo.animation);
 		}
 	}
 }
