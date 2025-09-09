@@ -16,7 +16,12 @@ function init(canvas) {
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x222222);
 
-	camera = new THREE.PerspectiveCamera(60, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+	camera = new THREE.PerspectiveCamera(
+		60,
+		canvas.clientWidth / canvas.clientHeight,
+		0.1,
+		1000
+	);
 
 	renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -32,6 +37,7 @@ function init(canvas) {
 	scene.add(grid);
 
 	window.addEventListener("resize", onWindowResize, false);
+	onWindowResize();
 }
 
 function onWindowResize() {
@@ -70,7 +76,8 @@ function animate(gameLogic) {
 }
 
 function addPlayer(playerInfo) {
-	const modelName = playerInfo.model === "female" ? "Kimono_Female.gltf" : "Kimono_Male.gltf";
+	const modelName =
+		playerInfo.model === "female" ? "Kimono_Female.gltf" : "Kimono_Male.gltf";
 	const modelUrl = `/toon/${modelName}`;
 
 	const character = new Character(scene, (loadedCharacter) => {
@@ -95,23 +102,26 @@ function addPlayer(playerInfo) {
 }
 
 function updatePlayerPosition(playerInfo) {
-    // Only update remote players, local player is updated by its controller
+	// Only update remote players, local player is updated by its controller
 	if (playerInfo.id === localPlayerId) return;
 
 	const player = players[playerInfo.id];
 	if (player && player.character) {
-        const newPos = new THREE.Vector3(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
-        const oldPos = player.position.clone();
+		const newPos = new THREE.Vector3(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
+		const oldPos = player.position.clone();
 
-        // Interpolate position for smooth movement
-        player.character.model.position.lerp(newPos, 0.1);
-        player.position.copy(player.character.model.position);
+		// Interpolate position for smooth movement
+		player.character.model.position.lerp(newPos, 0.1);
+		player.position.copy(player.character.model.position);
 
 		const direction = new THREE.Vector3().subVectors(newPos, oldPos);
 		if (direction.lengthSq() > 0.001) {
-            const targetAngle = Math.atan2(direction.x, direction.z);
-            const targetQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), targetAngle);
-            player.character.model.quaternion.slerp(targetQuaternion, 0.1);
+			const targetAngle = Math.atan2(direction.x, direction.z);
+			const targetQuaternion = new THREE.Quaternion().setFromAxisAngle(
+				new THREE.Vector3(0, 1, 0),
+				targetAngle
+			);
+			player.character.model.quaternion.slerp(targetQuaternion, 0.1);
 			player.character.playAnimation("run");
 		} else {
 			player.character.playAnimation("idle");
