@@ -11,9 +11,11 @@ const keys = {
 	q: false,
 	ArrowRight: false,
 	d: false,
+	" ": false, // Pour la touche Espace
 };
 
 let zoomDelta = 0;
+let jumpPressed = false;
 
 // Initialise les écouteurs d'événements
 function init() {
@@ -21,6 +23,10 @@ function init() {
 	window.addEventListener("keydown", (event) => {
 		if (keys.hasOwnProperty(event.key)) {
 			event.preventDefault();
+			if (event.key === " " && !keys[" "]) {
+				// Détecte un nouvel appui sur Espace
+				jumpPressed = true;
+			}
 			keys[event.key] = true;
 		}
 	});
@@ -55,6 +61,11 @@ export const UserInput = {
 	keys,
 	get zoomDelta() {
 		return zoomDelta;
-	}, // Expose en lecture seule
+	},
+	get jumpJustPressed() {
+		const pressed = jumpPressed;
+		jumpPressed = false; // Se réinitialise après lecture
+		return pressed;
+	},
 	resetZoom,
 };

@@ -213,3 +213,15 @@ body {
 	color: white;
 	cursor: pointer;
 }
+
+#profile-model-selection {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 15px;
+}
+
+#profile-model-selection input {
+	width: auto;
+	margin-bottom: 0;
+}

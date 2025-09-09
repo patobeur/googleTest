@@ -7,6 +7,9 @@ import { OrbitControls } from "/node_modules_min/three/examples/jsm/controls/Orb
 import { ThreeScene } from "./three-scene.js";
 import { UserInput } from "./user-input.js";
 
+// Logique de jeu principale
+const playerSpeed = 0.1;
+
 // DOM Elements
 const authContainer = document.getElementById("auth-container");
 const gameContainer = document.getElementById("game-container");
@@ -45,6 +48,9 @@ function showGame() {
 // Game Logic (to be initialized after login)
 function initializeGame(token) {
 	// 1. Initialisation des modules
+	const savedModel = localStorage.getItem("playerModel") || "male";
+	const savedColor = localStorage.getItem("playerColor") || "#ff0000";
+
 	ThreeScene.init(document.getElementById("game-canvas"));
 	UserInput.init();
 
@@ -52,12 +58,15 @@ function initializeGame(token) {
 	const socket = io({
 		auth: {
 			token,
+			model: savedModel,
+			color: savedColor,
 		},
 	});
 	let myId = null;
 
 	socket.on("connect", () => {
 		myId = socket.id;
+		ThreeScene.setLocalPlayerId(myId);
 		console.log("Connecté au serveur avec l-ID:", myId);
 	});
 
@@ -73,12 +82,21 @@ function initializeGame(token) {
 		console.log("affiche de tout les joueur(euse)s");
 		for (let id in allPlayers) {
 			if (allPlayers.hasOwnProperty(id)) {
-				ThreeScene.addPlayer(allPlayers[id]);
+				// Augmenter l'info joueur avec le modèle local si non fourni
+				const playerInfo = allPlayers[id];
+				if (!playerInfo.model) {
+					playerInfo.model = localStorage.getItem("playerModel") || "male";
+				}
+				ThreeScene.addPlayer(playerInfo);
 			}
 		}
 	});
 
 	socket.on("newPlayer", (playerInfo) => {
+		// Augmenter l'info joueur avec le modèle local si non fourni
+		if (!playerInfo.model) {
+			playerInfo.model = localStorage.getItem("playerModel") || "male";
+		}
 		ThreeScene.addPlayer(playerInfo);
 	});
 
@@ -96,15 +114,13 @@ function initializeGame(token) {
 		ThreeScene.updatePlayerPosition(correctedPlayerInfo);
 	});
 
-	// 3. Logique de jeu principale
-	const playerSpeed = 1;
-
 	function gameLogic() {
 		// Vérifie si notre joueur existe dans la scène
 		if (myId && ThreeScene.players[myId]) {
-			let moved = false;
 			const playerObject = ThreeScene.players[myId];
+			let moved = false;
 
+			// Mouvement
 			if (UserInput.keys.ArrowUp || UserInput.keys["z"]) {
 				playerObject.position.y += playerSpeed;
 				moved = true;
@@ -120,6 +136,16 @@ function initializeGame(token) {
 			if (UserInput.keys.ArrowRight || UserInput.keys["d"]) {
 				playerObject.position.x += playerSpeed;
 				moved = true;
+			}
+
+			// Animation locale
+			if (UserInput.jumpJustPressed) {
+				ThreeScene.playLocalPlayerAnimation("jump");
+				// Note: La logique de saut réelle (physique) n'est pas implémentée
+			} else if (moved) {
+				ThreeScene.playLocalPlayerAnimation("run");
+			} else {
+				ThreeScene.playLocalPlayerAnimation("idle");
 			}
 
 			// Si on a bougé, on envoie la nouvelle position au serveur
@@ -193,6 +219,15 @@ function closeModal(modal) {
 
 profileLink.addEventListener("click", (e) => {
 	e.preventDefault();
+
+	// Load saved preferences into the form
+	const savedColor = localStorage.getItem("playerColor") || "#ff0000";
+	const savedModel = localStorage.getItem("playerModel") || "male";
+	document.getElementById("profile-color").value = savedColor;
+	document.querySelector(
+		`input[name="model"][value="${savedModel}"]`
+	).checked = true;
+
 	openModal(profileModal);
 	menuDropdown.style.display = "none";
 });
@@ -230,8 +265,18 @@ profileForm.addEventListener("submit", (e) => {
 	e.preventDefault();
 	const username = document.getElementById("profile-username").value;
 	const color = document.getElementById("profile-color").value;
-	console.log("Saving profile...", { username, color });
+	const model = document.querySelector('input[name="model"]:checked').value;
+
+	// Save to localStorage
+	localStorage.setItem("playerColor", color);
+	localStorage.setItem("playerModel", model);
+
+	console.log("Saving profile...", { username, color, model });
 	// Here you would typically send this data to the server
+
+	// Optional: Notify the user and maybe update the current character
+	alert("Profile saved! Changes will apply on next login.");
+
 	closeModal(profileModal);
 });
 
