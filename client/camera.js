@@ -1,5 +1,3 @@
-// client/camera.js
-
 import * as THREE from "three";
 import { UserInput } from "./user-input.js";
 
@@ -11,12 +9,17 @@ const conf = {
 		maxZoom: 20,
 		sensitivity: 0.002,
 		distance: 10,
+        lerpSpeed: 0.1, // How quickly the camera follows
 	},
 };
 
 // Variables for camera rotation
 let euler = new THREE.Euler(0, 0, 0, "YXZ");
 const PI_2 = Math.PI / 2;
+
+// Temp vectors to avoid creating new ones in the loop
+const targetPosition = new THREE.Vector3();
+const targetQuaternion = new THREE.Quaternion();
 
 function init(canvas, scene) {
 	camera = new THREE.PerspectiveCamera(
@@ -41,19 +44,31 @@ function onWindowResize(canvas) {
 }
 
 function update(player, zoomDelta) {
-	if (!camRig || !player) return;
+	if (!camRig || !player || !player.character || !player.character.model) return;
 
-	// Camera rotation from mouse input
-	euler.y -= UserInput.mouseDeltaX * conf.camera.sensitivity;
+    const playerModel = player.character.model;
+
+	// --- Position Interpolation ---
+    // The camera rig should be at the player's position.
+    // We will smoothly move it there.
+    targetPosition.copy(playerModel.position);
+    camRig.position.lerp(targetPosition, conf.camera.lerpSpeed);
+
+	// --- Rotation ---
+	// Vertical rotation (pitch) is controlled by the mouse.
 	euler.x -= UserInput.mouseDeltaY * conf.camera.sensitivity;
 	euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x)); // Clamp vertical rotation
 
-	camRig.quaternion.setFromEuler(euler);
+    // Horizontal rotation (yaw) is now driven by the player's rotation.
+    // We will smoothly interpolate to the player's yaw.
+    const playerEuler = new THREE.Euler().setFromQuaternion(playerModel.quaternion, 'YXZ');
 
-	// Position the camera rig at the player's location
-	camRig.position.copy(player.position);
+    const targetEuler = new THREE.Euler(euler.x, playerEuler.y, 0, 'YXZ');
+    targetQuaternion.setFromEuler(targetEuler);
+    camRig.quaternion.slerp(targetQuaternion, conf.camera.lerpSpeed);
 
-	// Handle zoom
+
+	// --- Zoom ---
 	conf.camera.distance -= zoomDelta * conf.camera.zoomSpeed;
 	conf.camera.distance = Math.max(
 		conf.camera.minZoom,

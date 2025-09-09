@@ -103,16 +103,21 @@ function updatePlayerPosition(playerInfo) {
 		const oldPos = player.position.clone();
 		const newPos = new THREE.Vector3(playerInfo.x, playerInfo.y, 0);
 
+		// Calculate direction of movement
+		const direction = new THREE.Vector3().subVectors(newPos, oldPos);
+
+		// Update position
 		player.character.setPosition(newPos.x, newPos.y, newPos.z);
 		player.position.copy(newPos);
 
-		// Déterminer si le joueur bouge et jouer l'animation appropriée
-		const distance = oldPos.distanceTo(newPos);
-		if (distance > 0.1) {
-			// Seuil pour considérer un mouvement
-			player.character.playAnimation("Run"); // Assumant que l'animation s'appelle "Run"
+		// Set rotation from direction and manage animation
+		if (direction.lengthSq() > 0.0001) {
+			// If there is movement, rotate and play run animation
+			player.character.setRotationFromDirection(direction);
+			player.character.playAnimation("Run");
 		} else {
-			player.character.playAnimation("Idle"); // Assumant que l'animation s'appelle "Idle"
+			// If not moving, play idle animation
+			player.character.playAnimation("Idle");
 		}
 	}
 }

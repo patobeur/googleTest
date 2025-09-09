@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-// import { SkeletonUtils } from "three/addons/utils/SkeletonUtils.js";
-
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 
 class Character {
@@ -18,6 +16,11 @@ class Character {
 			jump: null,
 		};
 		this.currentAction = null;
+		this.model = null;
+
+		// New properties for rotation
+		this.targetQuaternion = new THREE.Quaternion();
+		this.rotationSpeed = 0.1;
 	}
 
 	load(modelUrl) {
@@ -31,7 +34,9 @@ class Character {
 				model.rotation.x = Math.PI / 2;
 				this.scene.add(model);
 				this.model = model;
-				// this.model.scale.set(10, 10, 10);
+
+				// Initialize target quaternion to the model's initial rotation
+				this.targetQuaternion.copy(this.model.quaternion);
 
 				this.mixer = new THREE.AnimationMixer(this.model);
 				this._prepareAnimations();
@@ -105,11 +110,30 @@ class Character {
 		if (this.mixer) {
 			this.mixer.update(deltaTime);
 		}
+		if (this.model) {
+			// Smoothly interpolate the model's rotation
+			this.model.quaternion.slerp(this.targetQuaternion, this.rotationSpeed);
+		}
 	}
 
 	setPosition(x, y, z) {
 		if (this.model) {
 			this.model.position.set(x, y, z);
+		}
+	}
+
+	setRotationFromDirection(direction) {
+		if (this.model && direction.lengthSq() > 0.01) {
+			// Calculate the angle on the XY plane.
+			// The character's "forward" is along the Y-axis.
+			const angle = Math.atan2(direction.x, direction.y);
+
+			// We need to create a quaternion that represents this rotation around the Z-axis.
+			// However, the model is initially rotated on the X-axis.
+			// So, we need to combine the initial rotation with the new yaw rotation.
+			const initialRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+			const yawRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), angle);
+			this.targetQuaternion.multiplyQuaternions(initialRotation, yawRotation);
 		}
 	}
 }
