@@ -29,7 +29,7 @@ class Character {
 			modelUrl,
 			(gltf) => {
 				this.gltf = gltf;
-
+				// à l'origine le model gltf est tourné dans le mauvais sens. il est de face au lieu d'etre de dos. il faut le retourner avant de creer model
 				const model = clone(this.gltf.scene);
 				this.scene.add(model);
 				this.model = model;
@@ -120,7 +120,6 @@ class Character {
 			this.model.position.set(x, y, z);
 		}
 	}
-
 }
 
 export { Character };
