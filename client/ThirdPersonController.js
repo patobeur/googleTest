@@ -58,22 +58,16 @@ class ThirdPersonController {
 		moveDirection.normalize();
 
 		// === 3. Update Player Rotation ===
-		// this is still not working
 		// The player's model should always face in the direction of the camera's yaw.
-		// We set the character's target quaternion, and the character itself will handle the slerp.
 		const targetQuaternion = new THREE.Quaternion();
-		// targetQuaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.cameraEuler.y);
+
 		// We add Math.PI to the camera's yaw to make the character face away from the camera.
 		targetQuaternion.setFromAxisAngle(
 			new THREE.Vector3(0, 1, 0),
 			this.cameraEuler.y + Math.PI
 		);
-		playerModel.quaternion.slerp(
-			targetQuaternion,
-			this.conf.player.rotationLerpSpeed
-		);
 
-		//this.character.targetQuaternion.copy(targetQuaternion);
+		this.character.targetQuaternion.copy(targetQuaternion);
 
 		// === 4. Update Player Position ===
 		if (moveDirection.lengthSq() > 0) {
