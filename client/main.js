@@ -5,10 +5,6 @@ import { ThreeScene } from "./three-scene.js";
 import { UserInput } from "./user-input.js";
 import { Auth } from "./auth.js";
 import { UI } from "./ui.js";
-import { Camera } from "./camera.js";
-
-const playerSpeed = 0.1;
-
 // Game Logic (to be initialized after login)
 function initializeGame(token) {
 	// 1. Initialisation des modules
@@ -75,58 +71,26 @@ function initializeGame(token) {
 		ThreeScene.updatePlayerPosition(correctedPlayerInfo);
 	});
 
-	const forwardVector = new THREE.Vector3();
-	const rightVector = new THREE.Vector3();
+    // A simple state to prevent sending data on every frame
+    const lastSentPosition = new THREE.Vector3();
+    const positionThreshold = 0.01; // Only send update if moved more than this
 
 	function gameLogic() {
-		if (myId && ThreeScene.players[myId]) {
-			const playerObject = ThreeScene.players[myId];
-			let moved = false;
+        // The new game logic's only job is to send the local player's state to the server.
+        // The ThirdPersonController handles all the movement and camera logic.
+		if (myId && ThreeScene.players[myId] && ThreeScene.players[myId].character) {
+            const playerModel = ThreeScene.players[myId].character.model;
+            const currentPosition = playerModel.position;
 
-			// Get camera direction
-			const cameraDirection = Camera.camRig.getWorldDirection(new THREE.Vector3());
-			forwardVector.set(cameraDirection.x, cameraDirection.y, 0).normalize();
-			rightVector.set(forwardVector.y, -forwardVector.x, 0);
-
-			const moveDirection = new THREE.Vector3();
-
-			if (UserInput.keys.ArrowUp || UserInput.keys["z"]) {
-				moveDirection.add(forwardVector);
-				moved = true;
-			}
-			if (UserInput.keys.ArrowDown || UserInput.keys["s"]) {
-				moveDirection.sub(forwardVector);
-				moved = true;
-			}
-			if (UserInput.keys.ArrowLeft || UserInput.keys["q"]) {
-				moveDirection.sub(rightVector);
-				moved = true;
-			}
-			if (UserInput.keys.ArrowRight || UserInput.keys["d"]) {
-				moveDirection.add(rightVector);
-				moved = true;
-			}
-
-			if (moved) {
-				playerObject.position.add(moveDirection.normalize().multiplyScalar(playerSpeed));
-				socket.emit("playerMovement", {
-					x: playerObject.position.x,
-					y: playerObject.position.y,
-				});
-			}
-
-			// Animation
-			if (UserInput.jumpJustPressed) {
-				ThreeScene.playLocalPlayerAnimation("jump");
-			} else if (moved) {
-				ThreeScene.playLocalPlayerAnimation("run");
-			} else {
-				ThreeScene.playLocalPlayerAnimation("idle");
-			}
-
-			// Update camera
-			ThreeScene.updateCamera(myId, UserInput.zoomDelta);
-			UserInput.resetZoom();
+            // Check if player has moved enough to warrant an update
+            if(currentPosition.distanceToSquared(lastSentPosition) > positionThreshold * positionThreshold) {
+                // Remember: the server still thinks Y is forward, so we send 'z' as 'y'.
+                socket.emit("playerMovement", {
+                    x: currentPosition.x,
+                    y: currentPosition.z,
+                });
+                lastSentPosition.copy(currentPosition);
+            }
 		}
 	}
 

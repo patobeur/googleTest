@@ -31,7 +31,6 @@ class Character {
 				this.gltf = gltf;
 
 				const model = clone(this.gltf.scene);
-				model.rotation.x = Math.PI / 2;
 				this.scene.add(model);
 				this.model = model;
 
@@ -122,20 +121,6 @@ class Character {
 		}
 	}
 
-	setRotationFromDirection(direction) {
-		if (this.model && direction.lengthSq() > 0.01) {
-			// Calculate the angle on the XY plane.
-			// The character's "forward" is along the Y-axis.
-			const angle = Math.atan2(direction.x, direction.y);
-
-			// We need to create a quaternion that represents this rotation around the Z-axis.
-			// However, the model is initially rotated on the X-axis.
-			// So, we need to combine the initial rotation with the new yaw rotation.
-			const initialRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
-			const yawRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), angle);
-			this.targetQuaternion.multiplyQuaternions(initialRotation, yawRotation);
-		}
-	}
 }
 
 export { Character };
