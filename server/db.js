@@ -15,6 +15,10 @@ function getUserByEmail(email) {
     return db.get('users').find({ email }).value();
 }
 
+function getUserById(id) {
+    return db.get('users').find({ id }).value();
+}
+
 function createUser(user) {
     db.get('users').push(user).write();
 }
@@ -52,6 +56,7 @@ function updatePlayer(player) {
 module.exports = {
     initializeDatabase,
     getUserByEmail,
+    getUserById,
     createUser,
     updateUser,
     getUserByResetToken,

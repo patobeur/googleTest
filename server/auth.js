@@ -10,10 +10,10 @@ const jwtSecret = 'supersecretkey'; // In a real app, use an environment variabl
 
 // Route d'inscription
 router.post('/register', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, name } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+    if (!email || !password || !name) {
+        return res.status(400).json({ message: 'Email, password and name are required' });
     }
 
     const existingUser = getUserByEmail(email);
@@ -25,6 +25,7 @@ router.post('/register', async (req, res) => {
     const newUser = {
         id: Date.now().toString(),
         email,
+        name,
         password: hashedPassword
     };
 

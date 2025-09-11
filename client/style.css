@@ -225,3 +225,16 @@ body {
 	width: auto;
 	margin-bottom: 0;
 }
+
+/* --- GAME --- */
+.name-label {
+	position: absolute;
+	color: white;
+	background-color: rgba(0, 0, 0, 0.5);
+	padding: 2px 5px;
+	border-radius: 3px;
+	font-family: sans-serif;
+	font-size: 14px;
+	pointer-events: none; /* Important so labels don't block mouse interactions */
+	text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
