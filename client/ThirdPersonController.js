@@ -69,22 +69,16 @@ class ThirdPersonController {
 		);
 
 		if (this.physicsBody) {
-			this.physicsBody.setAngularVelocity(new Ammo.btVector3(0, 0, 0));
-
-			const ms = this.physicsBody.getMotionState();
-			if (ms) {
-				const transform = new Ammo.btTransform();
-				ms.getWorldTransform(transform);
-				transform.setRotation(
-					new Ammo.btQuaternion(
-						targetQuaternion.x,
-						targetQuaternion.y,
-						targetQuaternion.z,
-						targetQuaternion.w
-					)
-				);
-				ms.setWorldTransform(transform);
-			}
+			const transform = this.physicsBody.getWorldTransform();
+			transform.setRotation(
+				new Ammo.btQuaternion(
+					targetQuaternion.x,
+					targetQuaternion.y,
+					targetQuaternion.z,
+					targetQuaternion.w
+				)
+			);
+			this.physicsBody.setWorldTransform(transform);
 		} else {
 			this.character.targetQuaternion.copy(targetQuaternion);
 		}
