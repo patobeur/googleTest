@@ -5,7 +5,7 @@ const {
 	updatePlayer,
 	getUserById,
 } = require("./db");
-const jwtSecret = process.env["SMTP_PASS"]; // In a real app, use an environment variable
+const jwtSecret = "supersecretkey"; // In a real app, use an environment variable
 
 function initGame(io) {
 	const players = {};
