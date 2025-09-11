@@ -7,6 +7,24 @@ const {
 } = require("./db");
 const jwtSecret = "supersecretkey"; // In a real app, use an environment variable
 
+const worldItems = [];
+let itemCounter = 0;
+const itemTypes = ["wood", "stone", "iron"];
+
+function spawnCube(io) {
+	itemCounter++;
+	const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+	const item = {
+		id: itemCounter,
+		type: type,
+		x: Math.floor(Math.random() * 20) - 10,
+		y: 0.5,
+		z: Math.floor(Math.random() * 20) - 10,
+	};
+	worldItems.push(item);
+	io.emit("itemSpawned", item);
+}
+
 function initGame(io) {
 	const players = {};
 
@@ -50,6 +68,7 @@ function initGame(io) {
 				color: `hsl(${Math.random() * 360}, 100%, 50%)`,
 				rotation: { x: 0, y: 0, z: 0, w: 1 },
 				animation: "idle",
+				inventory: [],
 			};
 			createPlayer(player);
 		} else {
@@ -57,11 +76,13 @@ function initGame(io) {
 			player.name = user.name; // Ensure name is up-to-date
 			if (!player.rotation) player.rotation = { x: 0, y: 0, z: 0, w: 1 };
 			if (!player.animation) player.animation = "idle";
+			if (!player.inventory) player.inventory = [];
 		}
 
 		players[socket.id] = player;
 
 		socket.emit("currentState", players);
+		socket.emit("worldItems", worldItems);
 		socket.broadcast.emit("newPlayer", player);
 
 		socket.on("disconnect", () => {
@@ -111,7 +132,51 @@ function initGame(io) {
 				socket.emit("correction", { x: player.x, y: player.y });
 			}
 		});
+
+		socket.on("pickupItem", (itemId) => {
+			const player = players[socket.id];
+			if (!player) return;
+
+			const itemIndex = worldItems.findIndex((item) => item.id === itemId);
+			if (itemIndex === -1) return;
+
+			if (player.inventory.length >= 200) {
+				return; // Inventory is full
+			}
+
+			const item = worldItems[itemIndex];
+			const distance = Math.sqrt(
+				Math.pow(player.x - item.x, 2) + Math.pow(player.y - item.z, 2)
+			);
+
+			if (distance < 2) {
+				player.inventory.push(item);
+				worldItems.splice(itemIndex, 1);
+				io.emit("itemPickedUp", itemId);
+				updatePlayer(player);
+				socket.emit("inventoryUpdate", player.inventory);
+			}
+		});
+
+		socket.on("dropItem", (item) => {
+			const player = players[socket.id];
+			if (!player) return;
+
+			const itemIndex = player.inventory.findIndex((i) => i.id === item.id);
+			if (itemIndex === -1) return;
+
+			const droppedItem = player.inventory.splice(itemIndex, 1)[0];
+			droppedItem.x = player.x;
+			droppedItem.y = 0.5;
+			droppedItem.z = player.y; // Player's y is on the z axis in 3D space
+			worldItems.push(droppedItem);
+			io.emit("itemSpawned", droppedItem);
+			updatePlayer(player);
+			socket.emit("inventoryUpdate", player.inventory);
+		});
 	});
+
+	setInterval(() => spawnCube(io), 5000); // Spawn a new cube every 5 seconds
 }
 
 module.exports = { initGame };

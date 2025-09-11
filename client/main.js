@@ -71,6 +71,40 @@ function initializeGame(token) {
 		ThreeScene.updatePlayerPosition(correctedPlayerInfo);
 	});
 
+	let inventoryOpen = false;
+	function toggleInventory() {
+		inventoryOpen = !inventoryOpen;
+		if (inventoryOpen) {
+			UI.openInventory();
+		} else {
+			UI.closeInventory();
+		}
+	}
+
+	socket.on("worldItems", (items) => {
+		items.forEach((item) => ThreeScene.addItem(item));
+	});
+
+	socket.on("itemSpawned", (item) => {
+		ThreeScene.addItem(item);
+	});
+
+	socket.on("itemPickedUp", (itemId) => {
+		ThreeScene.removeItem(itemId);
+	});
+
+	socket.on("inventoryUpdate", (inventory) => {
+		const player = ThreeScene.players[myId];
+		if (player) {
+			player.inventory = inventory;
+		}
+		UI.updateInventory(inventory);
+	});
+
+	UI.setOnDropItem((item) => {
+		socket.emit("dropItem", item);
+	});
+
     // State to prevent sending data on every frame
     const lastSent = {
         position: new THREE.Vector3(),
@@ -117,6 +151,17 @@ function initializeGame(token) {
             lastSent.quaternion.copy(currentQuaternion);
             lastSent.animation = currentAnimation;
         }
+
+		const actions = UserInput.getAndResetActions();
+		if (actions.inventory) {
+			toggleInventory();
+		}
+		if (actions.pickup) {
+			const closestItem = ThreeScene.findClosestItem(currentPosition);
+			if (closestItem) {
+				socket.emit("pickupItem", closestItem.id);
+			}
+		}
 	}
 
 	ThreeScene.animate(gameLogic);
