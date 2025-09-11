@@ -1,6 +1,11 @@
 const jwt = require("jsonwebtoken");
-const { getPlayerByUserId, createPlayer, updatePlayer } = require("./db");
-const jwtSecret = process.env["SMTP_PASS"]; // In a real app, use an environment variable
+const {
+	getPlayerByUserId,
+	createPlayer,
+	updatePlayer,
+	getUserById,
+} = require("./db");
+const jwtSecret = "supersecretkey"; // In a real app, use an environment variable
 
 function initGame(io) {
 	const players = {};
@@ -28,11 +33,18 @@ function initGame(io) {
 			socket.userId
 		);
 
+		const user = getUserById(socket.userId);
+		if (!user) {
+			console.error("User not found for userId:", socket.userId);
+			return; // Or handle appropriately
+		}
+
 		let player = getPlayerByUserId(socket.userId);
 		if (!player) {
 			player = {
 				id: socket.id,
 				userId: socket.userId,
+				name: user.name, // Add name here
 				x: Math.floor(Math.random() * 10) - 5,
 				y: Math.floor(Math.random() * 10) - 5,
 				color: `hsl(${Math.random() * 360}, 100%, 50%)`,
@@ -42,6 +54,7 @@ function initGame(io) {
 			createPlayer(player);
 		} else {
 			player.id = socket.id; // Update socket id
+			player.name = user.name; // Ensure name is up-to-date
 			if (!player.rotation) player.rotation = { x: 0, y: 0, z: 0, w: 1 };
 			if (!player.animation) player.animation = "idle";
 		}
@@ -82,6 +95,9 @@ function initGame(io) {
 				player.y = newPosition.y;
 				player.rotation = movementData.rotation;
 				player.animation = movementData.animation;
+
+				// Save data on every move
+				updatePlayer(player);
 
 				io.emit("playerMoved", player);
 			} else {

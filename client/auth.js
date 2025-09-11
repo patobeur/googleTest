@@ -62,12 +62,13 @@ function init(loginCallback) {
 
 	// Setup button event listeners
 	registerButton.addEventListener("click", async () => {
+		const name = document.getElementById("register-name").value;
 		const email = document.getElementById("register-email").value;
 		const password = document.getElementById("register-password").value;
 		const response = await fetch("/auth/register", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ email, password }),
+			body: JSON.stringify({ email, password, name }),
 		});
 		if (response.ok) {
 			alert("Registration successful! Please login.");

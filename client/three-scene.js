@@ -58,8 +58,23 @@ function renderLoop() {
 	}
 
 	for (const id in players) {
-		if (players[id].character) {
-			players[id].character.update(deltaTime);
+		const player = players[id];
+		if (player.character) {
+			player.character.update(deltaTime);
+
+			// Update name label position
+			if (player.nameLabel) {
+				const modelPosition = player.character.model.position.clone();
+				modelPosition.y += 3.5; // Adjust this value to position the label above the head
+				const screenPosition = modelPosition.project(camera);
+
+				const x = ((screenPosition.x + 1) / 2) * window.innerWidth;
+				const y = ((-screenPosition.y + 1) / 2) * window.innerHeight;
+
+				player.nameLabel.style.transform = `translate(-50%, -50%)`;
+				player.nameLabel.style.left = `${x}px`;
+				player.nameLabel.style.top = `${y}px`;
+			}
 		}
 	}
 
@@ -80,21 +95,25 @@ function addPlayer(playerInfo) {
 		playerInfo.model === "female" ? "Kimono_Female.gltf" : "Kimono_Male.gltf";
 	const modelUrl = `/toon/${modelName}`;
 
-	// const character = new Character(scene, (loadedCharacter) => {
-
 	const isLocal = playerInfo.id === localPlayerId;
 	const character = new Character(scene, {
 		isLocal: isLocal,
 		onLoadCallback: (loadedCharacter) => {
 			loadedCharacter.setPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
 
+			// Create name label
+			const nameLabel = document.createElement("div");
+			nameLabel.className = "name-label";
+			nameLabel.textContent = playerInfo.name;
+			document.getElementById("game-container").appendChild(nameLabel);
+
 			players[playerInfo.id] = {
 				...playerInfo,
 				character: loadedCharacter,
 				position: new THREE.Vector3(playerInfo.x, 0, playerInfo.y),
+				nameLabel: nameLabel,
 			};
 
-			// if (playerInfo.id === localPlayerId) {
 			if (isLocal) {
 				thirdPersonController = new ThirdPersonController({
 					camera: camera,
@@ -134,8 +153,13 @@ function updatePlayerPosition(playerInfo) {
 
 function removePlayer(id) {
 	const player = players[id];
-	if (player && player.character) {
-		scene.remove(player.character.model);
+	if (player) {
+		if (player.character) {
+			scene.remove(player.character.model);
+		}
+		if (player.nameLabel) {
+			player.nameLabel.remove();
+		}
 		delete players[id];
 	}
 }
