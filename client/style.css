@@ -238,3 +238,69 @@ body {
 	pointer-events: none; /* Important so labels don't block mouse interactions */
 	text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
+
+/* --- INVENTORY --- */
+.inventory-container {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 500px;
+	height: 400px;
+	background-color: var(--modal-bg);
+	border: 2px solid var(--border-color);
+	border-radius: 10px;
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+	z-index: 1003;
+	display: flex;
+	flex-direction: column;
+}
+
+.inventory-header {
+	padding: 10px;
+	background-color: var(--bg-color);
+	cursor: move;
+	border-bottom: 2px solid var(--border-color);
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.inventory-header h3 {
+	margin: 0;
+	color: var(--text-color);
+}
+
+.inventory-slots {
+	padding: 10px;
+	display: grid;
+	grid-template-columns: repeat(10, 1fr);
+	gap: 5px;
+	overflow-y: auto;
+	flex-grow: 1;
+}
+
+.inventory-slot {
+	width: 40px;
+	height: 40px;
+	background-color: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.inventory-item {
+	width: 32px;
+	height: 32px;
+	background-color: #ff9800; /* Example color */
+	border-radius: 3px;
+	cursor: grab;
+}
+
+.inventory-item:active {
+	cursor: grabbing;
+}

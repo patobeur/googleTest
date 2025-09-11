@@ -10,6 +10,100 @@ const profileModal = document.getElementById("profile-modal");
 const infoModal = document.getElementById("info-modal");
 const modals = document.querySelectorAll(".modal");
 const closeBtns = document.querySelectorAll(".close-btn");
+const inventoryContainer = document.getElementById("inventory-container");
+const inventoryCloseBtn = document.getElementById("inventory-close-btn");
+const inventorySlots = document.getElementById("inventory-slots");
+
+let onDropItem = null;
+
+function setOnDropItem(callback) {
+	onDropItem = callback;
+}
+
+// Draggable window logic
+function makeDraggable(element, handle) {
+	let pos1 = 0,
+		pos2 = 0,
+		pos3 = 0,
+		pos4 = 0;
+	handle.onmousedown = dragMouseDown;
+
+	function dragMouseDown(e) {
+		e.preventDefault();
+		pos3 = e.clientX;
+		pos4 = e.clientY;
+		document.onmouseup = closeDragElement;
+		document.onmousemove = elementDrag;
+	}
+
+	function elementDrag(e) {
+		e.preventDefault();
+		pos1 = pos3 - e.clientX;
+		pos2 = pos4 - e.clientY;
+		pos3 = e.clientX;
+		pos4 = e.clientY;
+		element.style.top = element.offsetTop - pos2 + "px";
+		element.style.left = element.offsetLeft - pos1 + "px";
+	}
+
+	function closeDragElement() {
+		document.onmouseup = null;
+		document.onmousemove = null;
+	}
+}
+
+function openInventory() {
+	inventoryContainer.style.display = "flex";
+}
+
+function closeInventory() {
+	inventoryContainer.style.display = "none";
+}
+
+const itemColors = {
+	wood: 0x8b4513, // Brown
+	stone: 0x808080, // Grey
+	iron: 0x43464b, // Dark silver
+};
+
+function updateInventory(inventory) {
+	inventorySlots.innerHTML = "";
+	for (let i = 0; i < 200; i++) {
+		const slot = document.createElement("div");
+		slot.className = "inventory-slot";
+		const item = inventory[i];
+		if (item) {
+			const itemDiv = document.createElement("div");
+			itemDiv.className = "inventory-item";
+			// Set color based on item type
+			const color = itemColors[item.type] || "#ff9800";
+			itemDiv.style.backgroundColor = `#${color.toString(16).padStart(6, '0')}`;
+
+			itemDiv.draggable = true;
+			itemDiv.dataset.itemId = item.id;
+			itemDiv.addEventListener("dragstart", (e) => {
+				e.dataTransfer.setData("text/plain", JSON.stringify(item));
+			});
+			slot.appendChild(itemDiv);
+		}
+		inventorySlots.appendChild(slot);
+	}
+}
+
+document.body.addEventListener("dragover", (e) => {
+	e.preventDefault();
+});
+
+document.body.addEventListener("drop", (e) => {
+	e.preventDefault();
+	if (e.target === document.body || e.target.id === "game-canvas") {
+		const itemData = e.dataTransfer.getData("text/plain");
+		if (itemData && onDropItem) {
+			const item = JSON.parse(itemData);
+			onDropItem(item);
+		}
+	}
+});
 
 // Theme switcher
 function applyTheme(theme) {
@@ -118,8 +212,31 @@ function init() {
 
 		closeModal(profileModal);
 	});
+
+	// Inventory logic
+	const inventoryLink = document.createElement("a");
+	inventoryLink.href = "#";
+	inventoryLink.textContent = "Inventaire";
+	menuDropdown.insertBefore(inventoryLink, profileLink);
+
+	inventoryLink.addEventListener("click", (e) => {
+		e.preventDefault();
+		openInventory();
+		menuDropdown.style.display = "none";
+	});
+
+	inventoryCloseBtn.addEventListener("click", closeInventory);
+
+	makeDraggable(
+		inventoryContainer,
+		inventoryContainer.querySelector(".inventory-header")
+	);
 }
 
 export const UI = {
 	init,
+	openInventory,
+	closeInventory,
+	updateInventory,
+	setOnDropItem,
 };

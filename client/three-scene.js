@@ -5,6 +5,7 @@ import { UserInput } from "./user-input.js";
 
 const clock = new THREE.Clock();
 const players = {};
+const worldItems = {};
 let scene, renderer, camera, thirdPersonController;
 let localPlayerId = null;
 
@@ -164,6 +165,44 @@ function removePlayer(id) {
 	}
 }
 
+const itemColors = {
+	wood: 0x8b4513, // Brown
+	stone: 0x808080, // Grey
+	iron: 0x43464b, // Dark silver
+};
+
+function addItem(itemInfo) {
+	const geometry = new THREE.BoxGeometry(1, 1, 1);
+	const color = itemColors[itemInfo.type] || 0xffffff;
+	const material = new THREE.MeshStandardMaterial({ color });
+	const cube = new THREE.Mesh(geometry, material);
+	cube.position.set(itemInfo.x, itemInfo.y, itemInfo.z);
+	scene.add(cube);
+	worldItems[itemInfo.id] = { ...itemInfo, mesh: cube };
+}
+
+function removeItem(itemId) {
+	const item = worldItems[itemId];
+	if (item) {
+		scene.remove(item.mesh);
+		delete worldItems[itemId];
+	}
+}
+
+function findClosestItem(playerPosition) {
+	let closestItem = null;
+	let minDistance = Infinity;
+	for (const id in worldItems) {
+		const item = worldItems[id];
+		const distance = playerPosition.distanceTo(item.mesh.position);
+		if (distance < minDistance) {
+			minDistance = distance;
+			closestItem = item;
+		}
+	}
+	return closestItem;
+}
+
 export const ThreeScene = {
 	init,
 	animate,
@@ -172,4 +211,7 @@ export const ThreeScene = {
 	removePlayer,
 	setLocalPlayerId,
 	players,
+	addItem,
+	removeItem,
+	findClosestItem,
 };
