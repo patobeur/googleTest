@@ -10,11 +10,14 @@ const jwtSecret = "supersecretkey"; // In a real app, use an environment variabl
 const worldItems = [];
 let itemCounter = 0;
 
+const itemTypes = ["wood", "stone", "iron"];
+
 function spawnCube(io) {
 	itemCounter++;
+	const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
 	const item = {
 		id: itemCounter,
-		type: "cube",
+		type: type,
 		x: Math.floor(Math.random() * 20) - 10,
 		y: 0.5,
 		z: Math.floor(Math.random() * 20) - 10,

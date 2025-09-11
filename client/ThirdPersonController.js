@@ -6,6 +6,7 @@ class ThirdPersonController {
 		this.camera = params.camera;
 		this.character = params.character;
 		this.scene = params.scene;
+		this.physicsBody = params.physicsBody;
 
 		// Config
 		this.conf = {
@@ -78,13 +79,27 @@ class ThirdPersonController {
 			);
 
 			// Calculate new position
-			const moveVector = moveDirection.multiplyScalar(
-				this.conf.player.speed * deltaTime
-			);
-			playerModel.position.add(moveVector);
+			const moveVector = moveDirection.multiplyScalar(this.conf.player.speed);
+
+			if (this.physicsBody) {
+				const velocity = this.physicsBody.getLinearVelocity();
+				this.physicsBody.setLinearVelocity(
+					new Ammo.btVector3(moveVector.x, velocity.y(), moveVector.z)
+				);
+			} else {
+				// Fallback to direct position manipulation if no physics body
+				const scaledMoveVector = moveDirection.multiplyScalar(deltaTime);
+				playerModel.position.add(scaledMoveVector);
+			}
 
 			this.character.playAnimation("run");
 		} else {
+			if (this.physicsBody) {
+				const velocity = this.physicsBody.getLinearVelocity();
+				this.physicsBody.setLinearVelocity(
+					new Ammo.btVector3(0, velocity.y(), 0)
+				);
+			}
 			this.character.playAnimation("idle");
 		}
 
