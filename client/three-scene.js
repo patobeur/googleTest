@@ -5,6 +5,7 @@ import { UserInput } from "./user-input.js";
 
 const clock = new THREE.Clock();
 const players = {};
+const worldItems = {};
 let scene, renderer, camera, thirdPersonController;
 let localPlayerId = null;
 
