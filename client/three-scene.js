@@ -100,10 +100,16 @@ function renderLoop() {
 	requestAnimationFrame(renderLoop);
 	const deltaTime = clock.getDelta();
 
+	// 1. Apply user input and update controllers
+	if (thirdPersonController) {
+		thirdPersonController.update(deltaTime);
+	}
+
+	// 2. Step the physics world
 	if (physicsWorld) {
 		physicsWorld.stepSimulation(deltaTime, 10);
 
-		// Update rigid bodies
+		// 3. Update visual meshes from physics bodies
 		for (let i = 0; i < rigidBodies.length; i++) {
 			const obj = rigidBodies[i];
 			const objThree = obj.userData.mesh;
@@ -118,9 +124,6 @@ function renderLoop() {
 		}
 	}
 
-	if (thirdPersonController) {
-		thirdPersonController.update(deltaTime);
-	}
 
 	for (const id in players) {
 		const player = players[id];
