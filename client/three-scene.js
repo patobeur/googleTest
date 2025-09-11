@@ -288,6 +288,12 @@ function addItem(itemInfo) {
 		);
 		const body = new Ammo.btRigidBody(rbInfo);
 		physicsWorld.addRigidBody(body);
+
+		// Static objects don't need to be in the rigidBodies update array
+		// unless they can be moved programmatically. For simplicity, we add them.
+		body.userData = { mesh: cube, transform: transform };
+		// rigidBodies.push(body); // We don't need to update static bodies every frame
+
 		worldItems[itemInfo.id] = { ...itemInfo, mesh: cube, body: body };
 	} else {
 		worldItems[itemInfo.id] = { ...itemInfo, mesh: cube };

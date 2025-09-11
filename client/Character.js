@@ -119,9 +119,9 @@ class Character {
 			this.mixer.update(deltaTime);
 		}
 		if (this.model) {
-			this.model.quaternion.slerp(this.targetQuaternion, this.rotationSpeed);
-			// Only interpolate position for remote players
+			// For remote players, interpolate rotation. Local player's rotation is handled by physics.
 			if (!this.isLocal) {
+				this.model.quaternion.slerp(this.targetQuaternion, this.rotationSpeed);
 				this.model.position.lerp(this.targetPosition, this.positionSpeed);
 			}
 		}

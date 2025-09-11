@@ -68,7 +68,24 @@ class ThirdPersonController {
 			this.cameraEuler.y + Math.PI
 		);
 
-		this.character.targetQuaternion.copy(targetQuaternion);
+		if (this.physicsBody) {
+			const ms = this.physicsBody.getMotionState();
+			if (ms) {
+				const transform = new Ammo.btTransform();
+				ms.getWorldTransform(transform);
+				transform.setRotation(
+					new Ammo.btQuaternion(
+						targetQuaternion.x,
+						targetQuaternion.y,
+						targetQuaternion.z,
+						targetQuaternion.w
+					)
+				);
+				ms.setWorldTransform(transform);
+			}
+		} else {
+			this.character.targetQuaternion.copy(targetQuaternion);
+		}
 
 		// === 4. Update Player Position ===
 		if (moveDirection.lengthSq() > 0) {
@@ -105,10 +122,22 @@ class ThirdPersonController {
 
 		// === 5. Update Camera Position and Target ===
 		// Update target position (what the camera looks at and orbits around)
-		this.target.position.lerp(
-			playerModel.position,
-			this.conf.camera.lerpSpeed
-		);
+		if (this.physicsBody) {
+			const ms = this.physicsBody.getMotionState();
+			if (ms) {
+				const transform = this.physicsBody.getWorldTransform();
+				const playerPosition = transform.getOrigin();
+				this.target.position.lerp(
+					new THREE.Vector3(playerPosition.x(), playerPosition.y(), playerPosition.z()),
+					this.conf.camera.lerpSpeed
+				);
+			}
+		} else {
+			this.target.position.lerp(
+				playerModel.position,
+				this.conf.camera.lerpSpeed
+			);
+		}
 		this.target.quaternion.setFromEuler(this.cameraEuler);
 
 		// Handle zoom
