@@ -10,13 +10,6 @@ const keys = {
 	ArrowRight: false,
 	d: false,
 	" ": false, // Pour la touche Espace
-	i: false,
-	e: false,
-};
-
-const actions = {
-	inventory: false,
-	pickup: false,
 };
 
 let zoomDelta = 0;
@@ -33,12 +26,6 @@ function init() {
 			event.preventDefault();
 			if (event.key === " " && !keys[" "]) {
 				jumpPressed = true;
-			}
-			if (event.key === "i" && !keys["i"]) {
-				actions.inventory = true;
-			}
-			if (event.key === "e" && !keys["e"]) {
-				actions.pickup = true;
 			}
 			keys[event.key] = true;
 		}
@@ -93,14 +80,6 @@ function resetMouseDelta() {
 }
 
 // Exporte les états et les fonctions
-function getAndResetActions() {
-	const currentActions = { ...actions };
-	actions.inventory = false;
-	actions.pickup = false;
-	return currentActions;
-}
-
-// Exporte les états et les fonctions
 export const UserInput = {
 	init,
 	keys,
@@ -118,7 +97,6 @@ export const UserInput = {
 	get mouseDeltaY() {
 		return mouseDeltaY;
 	},
-	getAndResetActions,
 	resetZoom,
 	resetMouseDelta,
 };

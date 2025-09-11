@@ -5,45 +5,8 @@ import { UserInput } from "./user-input.js";
 
 const clock = new THREE.Clock();
 const players = {};
-const worldItems = {};
 let scene, renderer, camera, thirdPersonController;
 let localPlayerId = null;
-
-// Physics variables
-let physicsWorld, collisionConfiguration, dispatcher, broadphase, solver;
-let rigidBodies = [];
-
-function initPhysics() {
-	// Ammo.js initialization
-	collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-	dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
-	broadphase = new Ammo.btDbvtBroadphase();
-	solver = new Ammo.btSequentialImpulseConstraintSolver();
-	physicsWorld = new Ammo.btDiscreteDynamicsWorld(
-		dispatcher,
-		broadphase,
-		solver,
-		collisionConfiguration
-	);
-	physicsWorld.setGravity(new Ammo.btVector3(0, -9.82, 0));
-
-	// Add a ground plane
-	const groundShape = new Ammo.btStaticPlaneShape(new Ammo.btVector3(0, 1, 0), 0);
-	const groundTransform = new Ammo.btTransform();
-	groundTransform.setIdentity();
-	groundTransform.setOrigin(new Ammo.btVector3(0, 0, 0));
-	const groundMass = 0;
-	const localInertia = new Ammo.btVector3(0, 0, 0);
-	const motionState = new Ammo.btDefaultMotionState(groundTransform);
-	const rbInfo = new Ammo.btRigidBodyConstructionInfo(
-		groundMass,
-		motionState,
-		groundShape,
-		localInertia
-	);
-	const groundBody = new Ammo.btRigidBody(rbInfo);
-	physicsWorld.addRigidBody(groundBody);
-}
 
 function setLocalPlayerId(id) {
 	localPlayerId = id;
@@ -73,16 +36,6 @@ function init(canvas) {
 	const grid = new THREE.GridHelper(50, 50, 0x888888, 0x444444);
 	scene.add(grid);
 
-	// Wait for Ammo to be ready
-	const ammoReadyInterval = setInterval(() => {
-		if (typeof Ammo === "function") {
-			clearInterval(ammoReadyInterval);
-			Ammo().then(() => {
-				initPhysics();
-			});
-		}
-	}, 50);
-
 	window.addEventListener("resize", onWindowResize, false);
 	onWindowResize();
 }
@@ -100,30 +53,9 @@ function renderLoop() {
 	requestAnimationFrame(renderLoop);
 	const deltaTime = clock.getDelta();
 
-	// 1. Apply user input and update controllers
 	if (thirdPersonController) {
 		thirdPersonController.update(deltaTime);
 	}
-
-	// 2. Step the physics world
-	if (physicsWorld) {
-		physicsWorld.stepSimulation(deltaTime, 10);
-
-		// 3. Update visual meshes from physics bodies
-		for (let i = 0; i < rigidBodies.length; i++) {
-			const obj = rigidBodies[i];
-			const objThree = obj.userData.mesh;
-			const ms = obj.getMotionState();
-			if (ms) {
-				ms.getWorldTransform(obj.userData.transform);
-				const p = obj.userData.transform.getOrigin();
-				const q = obj.userData.transform.getRotation();
-				objThree.position.set(p.x(), p.y(), p.z());
-				objThree.quaternion.set(q.x(), q.y(), q.z(), q.w());
-			}
-		}
-	}
-
 
 	for (const id in players) {
 		const player = players[id];
@@ -183,39 +115,10 @@ function addPlayer(playerInfo) {
 			};
 
 			if (isLocal) {
-				if (physicsWorld) {
-					// Create a capsule shape for the player
-					const shape = new Ammo.btCapsuleShape(0.5, 1.5);
-					const transform = new Ammo.btTransform();
-					transform.setIdentity();
-					transform.setOrigin(new Ammo.btVector3(playerInfo.x, 0, playerInfo.y));
-					const mass = 1;
-					const localInertia = new Ammo.btVector3(0, 0, 0);
-					shape.calculateLocalInertia(mass, localInertia);
-					const motionState = new Ammo.btDefaultMotionState(transform);
-					const rbInfo = new Ammo.btRigidBodyConstructionInfo(
-						mass,
-						motionState,
-						shape,
-						localInertia
-					);
-					const body = new Ammo.btRigidBody(rbInfo);
-					// Prevent the capsule from falling over
-					body.setAngularFactor(new Ammo.btVector3(0, 1, 0));
-					body.setActivationState(4); // DISABLE_DEACTIVATION
-
-					physicsWorld.addRigidBody(body);
-					rigidBodies.push(body);
-					body.userData = { mesh: loadedCharacter.model, transform: transform };
-
-					players[playerInfo.id].body = body;
-				}
-
 				thirdPersonController = new ThirdPersonController({
 					camera: camera,
 					character: loadedCharacter,
 					scene: scene,
-					physicsBody: players[playerInfo.id].body,
 				});
 			}
 		},
@@ -261,73 +164,6 @@ function removePlayer(id) {
 	}
 }
 
-const itemColors = {
-	wood: 0x8b4513, // Brown
-	stone: 0x808080, // Grey
-	iron: 0x43464b, // Dark silver
-};
-
-function addItem(itemInfo) {
-	const geometry = new THREE.BoxGeometry(1, 1, 1);
-	const color = itemColors[itemInfo.type] || 0xffffff; // Default to white if type is unknown
-	const material = new THREE.MeshStandardMaterial({ color });
-	const cube = new THREE.Mesh(geometry, material);
-	cube.position.set(itemInfo.x, itemInfo.y, itemInfo.z);
-	scene.add(cube);
-
-	if (physicsWorld) {
-		const shape = new Ammo.btBoxShape(new Ammo.btVector3(0.5, 0.5, 0.5));
-		const transform = new Ammo.btTransform();
-		transform.setIdentity();
-		transform.setOrigin(new Ammo.btVector3(itemInfo.x, itemInfo.y, itemInfo.z));
-		const mass = 0; // Static object
-		const localInertia = new Ammo.btVector3(0, 0, 0);
-		const motionState = new Ammo.btDefaultMotionState(transform);
-		const rbInfo = new Ammo.btRigidBodyConstructionInfo(
-			mass,
-			motionState,
-			shape,
-			localInertia
-		);
-		const body = new Ammo.btRigidBody(rbInfo);
-		physicsWorld.addRigidBody(body);
-
-		// Static objects don't need to be in the rigidBodies update array
-		// unless they can be moved programmatically. For simplicity, we add them.
-		body.userData = { mesh: cube, transform: transform };
-		// rigidBodies.push(body); // We don't need to update static bodies every frame
-
-		worldItems[itemInfo.id] = { ...itemInfo, mesh: cube, body: body };
-	} else {
-		worldItems[itemInfo.id] = { ...itemInfo, mesh: cube };
-	}
-}
-
-function removeItem(itemId) {
-	const item = worldItems[itemId];
-	if (item) {
-		scene.remove(item.mesh);
-		if (item.body) {
-			physicsWorld.removeRigidBody(item.body);
-		}
-		delete worldItems[itemId];
-	}
-}
-
-function findClosestItem(playerPosition) {
-	let closestItem = null;
-	let minDistance = Infinity;
-	for (const id in worldItems) {
-		const item = worldItems[id];
-		const distance = playerPosition.distanceTo(item.mesh.position);
-		if (distance < minDistance) {
-			minDistance = distance;
-			closestItem = item;
-		}
-	}
-	return closestItem;
-}
-
 export const ThreeScene = {
 	init,
 	animate,
@@ -336,7 +172,4 @@ export const ThreeScene = {
 	removePlayer,
 	setLocalPlayerId,
 	players,
-	addItem,
-	removeItem,
-	findClosestItem,
 };

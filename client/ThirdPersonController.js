@@ -6,7 +6,6 @@ class ThirdPersonController {
 		this.camera = params.camera;
 		this.character = params.character;
 		this.scene = params.scene;
-		this.physicsBody = params.physicsBody;
 
 		// Config
 		this.conf = {
@@ -68,20 +67,7 @@ class ThirdPersonController {
 			this.cameraEuler.y + Math.PI
 		);
 
-		if (this.physicsBody) {
-			const transform = this.physicsBody.getWorldTransform();
-			transform.setRotation(
-				new Ammo.btQuaternion(
-					targetQuaternion.x,
-					targetQuaternion.y,
-					targetQuaternion.z,
-					targetQuaternion.w
-				)
-			);
-			this.physicsBody.setWorldTransform(transform);
-		} else {
-			this.character.targetQuaternion.copy(targetQuaternion);
-		}
+		this.character.targetQuaternion.copy(targetQuaternion);
 
 		// === 4. Update Player Position ===
 		if (moveDirection.lengthSq() > 0) {
@@ -92,53 +78,23 @@ class ThirdPersonController {
 			);
 
 			// Calculate new position
-			const moveVector = moveDirection.multiplyScalar(this.conf.player.speed);
-
-			if (this.physicsBody) {
-				const velocity = this.physicsBody.getLinearVelocity();
-				this.physicsBody.setLinearVelocity(
-					new Ammo.btVector3(moveVector.x, velocity.y(), moveVector.z)
-				);
-			} else {
-				// Fallback to direct position manipulation if no physics body
-				const scaledMoveVector = moveDirection.multiplyScalar(deltaTime);
-				playerModel.position.add(scaledMoveVector);
-			}
+			const moveVector = moveDirection.multiplyScalar(
+				this.conf.player.speed * deltaTime
+			);
+			playerModel.position.add(moveVector);
 
 			this.character.playAnimation("run");
 		} else {
-			if (this.physicsBody) {
-				const velocity = this.physicsBody.getLinearVelocity();
-				this.physicsBody.setLinearVelocity(
-					new Ammo.btVector3(0, velocity.y(), 0)
-				);
-			}
 			this.character.playAnimation("idle");
 		}
 
 		// === 5. Update Camera Position and Target ===
 		// Update target position (what the camera looks at and orbits around)
-		if (this.physicsBody) {
-			const ms = this.physicsBody.getMotionState();
-			if (ms) {
-				const transform = this.physicsBody.getWorldTransform();
-				const playerPosition = transform.getOrigin();
-				this.target.position.lerp(
-					new THREE.Vector3(playerPosition.x(), playerPosition.y(), playerPosition.z()),
-					this.conf.camera.lerpSpeed
-				);
-			}
-		} else {
-			this.target.position.lerp(
-				playerModel.position,
-				this.conf.camera.lerpSpeed
-			);
-		}
+		this.target.position.lerp(
+			playerModel.position,
+			this.conf.camera.lerpSpeed
+		);
 		this.target.quaternion.setFromEuler(this.cameraEuler);
-
-		if (this.physicsBody) {
-			this.physicsBody.setAngularVelocity(new Ammo.btVector3(0, 0, 0));
-		}
 
 		// Handle zoom
 		this.conf.camera.distance +=
