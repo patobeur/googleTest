@@ -69,6 +69,8 @@ class ThirdPersonController {
 		);
 
 		if (this.physicsBody) {
+			this.physicsBody.setAngularVelocity(new Ammo.btVector3(0, 0, 0));
+
 			const ms = this.physicsBody.getMotionState();
 			if (ms) {
 				const transform = new Ammo.btTransform();
@@ -139,6 +141,10 @@ class ThirdPersonController {
 			);
 		}
 		this.target.quaternion.setFromEuler(this.cameraEuler);
+
+		if (this.physicsBody) {
+			this.physicsBody.setAngularVelocity(new Ammo.btVector3(0, 0, 0));
+		}
 
 		// Handle zoom
 		this.conf.camera.distance +=
