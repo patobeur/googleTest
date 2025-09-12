@@ -1,4 +1,5 @@
 const { updatePlayer } = require("./db");
+const { respawnItem } = require("./world");
 
 const MAX_STACK_SIZE = 64;
 
@@ -28,8 +29,10 @@ function registerInventoryHandlers(io, socket, players, worldItems) {
 				slot.quantity < MAX_STACK_SIZE
 			) {
 				slot.quantity++;
+                const pickedUpItemType = worldItems[itemIndexInWorld].type;
 				worldItems.splice(itemIndexInWorld, 1);
 				io.emit("itemPickedUp", itemId);
+                respawnItem(pickedUpItemType);
 				updatePlayer(player);
 				socket.emit("inventoryUpdate", player.inventory);
 				return;
@@ -40,8 +43,10 @@ function registerInventoryHandlers(io, socket, players, worldItems) {
 		const emptySlotIndex = player.inventory.findIndex((slot) => slot === null);
 		if (emptySlotIndex !== -1) {
 			player.inventory[emptySlotIndex] = { item: item, quantity: 1 };
+            const pickedUpItemType = worldItems[itemIndexInWorld].type;
 			worldItems.splice(itemIndexInWorld, 1);
 			io.emit("itemPickedUp", itemId);
+            respawnItem(pickedUpItemType);
 			updatePlayer(player);
 			socket.emit("inventoryUpdate", player.inventory);
 			return;
