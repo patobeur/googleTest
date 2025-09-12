@@ -178,8 +178,7 @@ function addItem(itemInfo) {
     }
 
 	const geometry = new THREE.BoxGeometry(1, 1, 1);
-	// We will use a placeholder color for now, since models are not yet implemented
-	const material = new THREE.MeshStandardMaterial({ color: 0xff00ff });
+	const material = new THREE.MeshStandardMaterial({ color: itemModelInfo.color || 0xffffff });
 	const cube = new THREE.Mesh(geometry, material);
 
 	cube.position.set(itemInfo.x, itemInfo.y, itemInfo.z);
