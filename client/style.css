@@ -299,6 +299,19 @@ body {
 	background-color: #ff9800; /* Example color */
 	border-radius: 3px;
 	cursor: grab;
+	position: relative;
+}
+
+.item-quantity {
+	position: absolute;
+	bottom: 2px;
+	right: 2px;
+	background-color: rgba(0, 0, 0, 0.7);
+	color: white;
+	padding: 1px 4px;
+	border-radius: 4px;
+	font-size: 10px;
+	font-weight: bold;
 }
 
 .inventory-item:active {
