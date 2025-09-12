@@ -47,6 +47,11 @@ function initializeGame(token) {
 					playerInfo.model = localStorage.getItem("playerModel") || "male";
 				}
 				ThreeScene.addPlayer(playerInfo);
+
+				// If this is the local player, update the inventory UI
+				if (id === myId) {
+					UI.updateInventory(playerInfo.inventory);
+				}
 			}
 		}
 	});
