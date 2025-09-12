@@ -16,6 +16,13 @@ const inventorySlots = document.getElementById("inventory-slots");
 
 let onDropItem = null;
 let onMoveItem = null;
+let tooltipElement = null;
+
+const itemDetails = {
+	wood: { name: "Bois", description: "Un morceau de bois de base." },
+	stone: { name: "Pierre", description: "Une pierre grise et solide." },
+	iron: { name: "Fer", description: "Un minerai de fer brut." },
+};
 
 function setOnDropItem(callback) {
 	onDropItem = callback;
@@ -98,6 +105,26 @@ function updateInventory(inventory) {
 				);
 			});
 
+			// Tooltip events
+			itemDiv.addEventListener("mouseenter", (e) => {
+				const details = itemDetails[slotData.item.type];
+				if (!details) return;
+
+				tooltipElement.innerHTML = `
+                    <strong>${details.name}</strong><br>
+                    Quantité: ${slotData.quantity}<br>
+                    <em>${details.description}</em>
+                `;
+				tooltipElement.style.display = "block";
+			});
+			itemDiv.addEventListener("mouseleave", () => {
+				tooltipElement.style.display = "none";
+			});
+			itemDiv.addEventListener("mousemove", (e) => {
+				tooltipElement.style.left = e.pageX + 10 + "px";
+				tooltipElement.style.top = e.pageY + 10 + "px";
+			});
+
 			if (slotData.quantity > 1) {
 				const quantityDiv = document.createElement("div");
 				quantityDiv.className = "item-quantity";
@@ -141,6 +168,11 @@ function applyTheme(theme) {
 }
 
 function init() {
+	// Create tooltip element
+	tooltipElement = document.createElement("div");
+	tooltipElement.className = "inventory-tooltip";
+	document.body.appendChild(tooltipElement);
+
 	// Apply saved theme on load
 	const savedTheme = localStorage.getItem("theme") || "dark";
 	applyTheme(savedTheme);

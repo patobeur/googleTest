@@ -317,3 +317,16 @@ body {
 .inventory-item:active {
 	cursor: grabbing;
 }
+
+.inventory-tooltip {
+	position: absolute;
+	display: none;
+	padding: 8px;
+	background-color: rgba(0, 0, 0, 0.8);
+	border: 1px solid #555;
+	border-radius: 5px;
+	color: white;
+	font-size: 12px;
+	z-index: 1100;
+	pointer-events: none;
+}
