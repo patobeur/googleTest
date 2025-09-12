@@ -1,21 +1,21 @@
 class ResourceManager {
     constructor() {
         this.itemModels = {
-            Wood: { model: 'models/wood.gltf', scale: 0.1 },
-            Stone: { model: 'models/stone.gltf', scale: 0.05 },
-            Herb: { model: 'models/herb.gltf', scale: 0.2 },
+            wood: { model: 'models/wood.gltf', scale: 0.1 },
+            stone: { model: 'models/stone.gltf', scale: 0.05 },
+            herb: { model: 'models/herb.gltf', scale: 0.2 },
         };
 
         this.maxInstancesPerType = {
-            Wood: 10,
-            Stone: 10,
-            Herb: 10,
+            wood: 10,
+            stone: 10,
+            herb: 10,
         };
 
         this.currentInstances = {
-            Wood: 0,
-            Stone: 0,
-            Herb: 0,
+            wood: 0,
+            stone: 0,
+            herb: 0,
         };
     }
 
