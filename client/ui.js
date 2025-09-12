@@ -15,9 +15,14 @@ const inventoryCloseBtn = document.getElementById("inventory-close-btn");
 const inventorySlots = document.getElementById("inventory-slots");
 
 let onDropItem = null;
+let onMoveItem = null;
 
 function setOnDropItem(callback) {
 	onDropItem = callback;
+}
+
+function setOnMoveItem(callback) {
+	onMoveItem = callback;
 }
 
 // Draggable window logic
@@ -68,25 +73,41 @@ const itemColors = {
 
 function updateInventory(inventory) {
 	inventorySlots.innerHTML = "";
-	for (let i = 0; i < 200; i++) {
-		const slot = document.createElement("div");
-		slot.className = "inventory-slot";
-		const item = inventory[i];
-		if (item) {
+	if (!inventory) return;
+
+	for (let i = 0; i < inventory.length; i++) {
+		const slotDiv = document.createElement("div");
+		slotDiv.className = "inventory-slot";
+		slotDiv.dataset.slotIndex = i;
+
+		const slotData = inventory[i];
+		if (slotData && slotData.item) {
 			const itemDiv = document.createElement("div");
 			itemDiv.className = "inventory-item";
-			// Set color based on item type
-			const color = itemColors[item.type] || "#ff9800";
-			itemDiv.style.backgroundColor = `#${color.toString(16).padStart(6, '0')}`;
+
+			const color = itemColors[slotData.item.type] || "#ff9800";
+			itemDiv.style.backgroundColor = `#${color.toString(16).padStart(6, "0")}`;
 
 			itemDiv.draggable = true;
-			itemDiv.dataset.itemId = item.id;
+			itemDiv.dataset.itemId = slotData.item.id;
+
 			itemDiv.addEventListener("dragstart", (e) => {
-				e.dataTransfer.setData("text/plain", JSON.stringify(item));
+				e.dataTransfer.setData(
+					"application/json",
+					JSON.stringify({ fromIndex: i })
+				);
 			});
-			slot.appendChild(itemDiv);
+
+			if (slotData.quantity > 1) {
+				const quantityDiv = document.createElement("div");
+				quantityDiv.className = "item-quantity";
+				quantityDiv.textContent = slotData.quantity;
+				itemDiv.appendChild(quantityDiv);
+			}
+
+			slotDiv.appendChild(itemDiv);
 		}
-		inventorySlots.appendChild(slot);
+		inventorySlots.appendChild(slotDiv);
 	}
 }
 
@@ -97,10 +118,13 @@ document.body.addEventListener("dragover", (e) => {
 document.body.addEventListener("drop", (e) => {
 	e.preventDefault();
 	if (e.target === document.body || e.target.id === "game-canvas") {
-		const itemData = e.dataTransfer.getData("text/plain");
-		if (itemData && onDropItem) {
-			const item = JSON.parse(itemData);
-			onDropItem(item);
+		try {
+			const data = JSON.parse(e.dataTransfer.getData("application/json"));
+			if (data && onDropItem) {
+				onDropItem(data.fromIndex);
+			}
+		} catch (error) {
+			// Ignore if data is not in the expected format
 		}
 	}
 });
@@ -231,6 +255,34 @@ function init() {
 		inventoryContainer,
 		inventoryContainer.querySelector(".inventory-header")
 	);
+
+	// Drag and drop for inventory slots
+	inventorySlots.addEventListener("dragover", (e) => {
+		e.preventDefault();
+	});
+
+	inventorySlots.addEventListener("drop", (e) => {
+		e.preventDefault();
+		try {
+			const data = JSON.parse(e.dataTransfer.getData("application/json"));
+			if (!data) return;
+
+			const fromIndex = data.fromIndex;
+			let toSlot = e.target;
+			while (toSlot && !toSlot.classList.contains("inventory-slot")) {
+				toSlot = toSlot.parentElement;
+			}
+
+			if (toSlot) {
+				const toIndex = parseInt(toSlot.dataset.slotIndex, 10);
+				if (onMoveItem && fromIndex !== toIndex) {
+					onMoveItem({ fromIndex, toIndex });
+				}
+			}
+		} catch (error) {
+			// Ignore if data is not in the expected format
+		}
+	});
 }
 
 export const UI = {
@@ -239,4 +291,5 @@ export const UI = {
 	closeInventory,
 	updateInventory,
 	setOnDropItem,
+	setOnMoveItem,
 };

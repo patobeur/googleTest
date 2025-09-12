@@ -101,8 +101,12 @@ function initializeGame(token) {
 		UI.updateInventory(inventory);
 	});
 
-	UI.setOnDropItem((item) => {
-		socket.emit("dropItem", item);
+	UI.setOnDropItem((slotIndex) => {
+		socket.emit("dropItem", slotIndex);
+	});
+
+	UI.setOnMoveItem(({ fromIndex, toIndex }) => {
+		socket.emit("moveItem", { fromIndex, toIndex });
 	});
 
     // State to prevent sending data on every frame

@@ -50,7 +50,7 @@ function handleNewPlayer(io, socket, worldItems) {
 			color: `hsl(${Math.random() * 360}, 100%, 50%)`,
 			rotation: { x: 0, y: 0, z: 0, w: 1 },
 			animation: "idle",
-			inventory: [],
+			inventory: Array(40).fill(null),
 			archetype: archetypes[0],
 			gender: genders[0],
 			stats: caracters[0],
@@ -63,7 +63,9 @@ function handleNewPlayer(io, socket, worldItems) {
 		player.name = user.name;
 		if (!player.rotation) player.rotation = { x: 0, y: 0, z: 0, w: 1 };
 		if (!player.animation) player.animation = "idle";
-		if (!player.inventory) player.inventory = [];
+		if (!player.inventory || player.inventory.length !== 40) {
+			player.inventory = Array(40).fill(null);
+		}
 	}
 
 	players[socket.id] = player;
