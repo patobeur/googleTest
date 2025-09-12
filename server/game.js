@@ -5,7 +5,8 @@ const {
 	updatePlayer,
 	getUserById,
 } = require("./db");
-const jwtSecret = "supersecretkey"; // In a real app, use an environment variable
+
+const jwtSecret = process.env["SMTP_PASS"];
 
 const worldItems = [];
 let itemCounter = 0;
