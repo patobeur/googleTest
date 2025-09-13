@@ -35,7 +35,7 @@ function init(canvas) {
 	dirLight.position.set(5, 10, 7.5);
 	scene.add(dirLight);
 
-	const grid = new THREE.GridHelper(50, 50, 0x888888, 0x444444);
+	const grid = new THREE.GridHelper(500, 500, 0x888888, 0x444444);
 	scene.add(grid);
 
 	window.addEventListener("resize", onWindowResize, false);

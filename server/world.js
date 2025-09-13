@@ -16,12 +16,13 @@ const RESPAWN_DELAY = 500000; // 500 seconds
 
 function spawnItem(type) {
     itemCounter++;
+
     const item = {
         id: itemCounter,
         type: type,
-        x: Math.floor(Math.random() * 20) - 10,
+        x: Math.floor(Math.random() * 50) - 25,
         y: 0.5,
-        z: Math.floor(Math.random() * 20) - 10,
+        z: Math.floor(Math.random() * 50) - 25,
     };
     worldItems.push(item);
     return item;
