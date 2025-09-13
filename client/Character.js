@@ -2,6 +2,13 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 
+const AnimsNames = [
+  "Death","Gun_Shoot","HitRecieve","HitRecieve_2","Idle","Idle_Gun",
+  "Idle_Gun_Pointing","Idle_Gun_Shoot","Idle_Neutral","Idle_Sword","Interact",
+  "Kick_Left","Kick_Right","Punch_Left","Punch_Right","Roll","Run","Run_Back",
+  "Run_Left","Run_Right","Run_Shoot","Sword_Slash","Walk","Wave"
+];
+
 class Character {
 	constructor(scene, options) {
 		this.scene = scene;
@@ -11,12 +18,7 @@ class Character {
 
 		this.gltf = null;
 		this.mixer = null;
-		this.animations = new Map();
-		this.actionClips = {
-			idle: null,
-			run: null,
-			jump: null,
-		};
+		this.actionClips = {};
 		this.currentAction = null;
 		this.model = null;
 
@@ -64,51 +66,27 @@ class Character {
 			animationMap.set(clip.name.toLowerCase(), this.mixer.clipAction(clip));
 		});
 
-		this.actionClips.idle = this._findAnimation(animationMap, "idle");
-		this.actionClips.run = this._findAnimation(animationMap, "run");
-		this.actionClips.jump = this._findAnimation(animationMap, "jump");
-	}
+		this.actionClips = {}; // Reset actionClips
 
-	_findAnimation(animationMap, name) {
-		const alternativeNames = {
-			idle: ["tpose", "t-pose"],
-			run: ["walk", "running"],
-			jump: ["jumping"],
-		};
-
-		// Exact match first
-		let action = animationMap.get(name);
-		if (action) return action;
-
-		// Partial match for the original name
-		for (const [clipName, clipAction] of animationMap.entries()) {
-			if (clipName.includes(name)) {
-				return clipAction;
+		AnimsNames.forEach((name) => {
+			const action = animationMap.get(name.toLowerCase());
+			if (action) {
+				this.actionClips[name.toLowerCase()] = action;
+			} else {
+				console.warn(`Animation "${name}" not found in the model.`);
 			}
-		}
+		});
 
-		// Check for alternative names
-		if (alternativeNames[name]) {
-			for (const altName of alternativeNames[name]) {
-				action = animationMap.get(altName);
-				if (action) return action;
-				for (const [clipName, clipAction] of animationMap.entries()) {
-					if (clipName.includes(altName)) {
-						return clipAction;
-					}
-				}
-			}
-		}
-
-		// Fallback to the first animation if no match is found for idle/run
-		if (name === "idle" || name === "run") {
+		// Fallback for idle animation if not found
+		if (!this.actionClips.idle) {
 			console.warn(
-				`Animation clip for "${name}" not found. Using first available clip.`
+				`"Idle" animation not found. Using first available clip as fallback.`
 			);
-			return animationMap.values().next().value || null;
+			if (this.gltf.animations.length > 0) {
+				const firstClip = this.gltf.animations[0];
+				this.actionClips.idle = this.mixer.clipAction(firstClip);
+			}
 		}
-
-		return null;
 	}
 
 	playAnimation(name) {
