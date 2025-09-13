@@ -2,13 +2,33 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 
-		const prefix = "characterarmature|"
+const prefix = "characterarmature|"
 
 const AnimsNames = [
-  prefix+"death",prefix+"gun_shoot",prefix+"hitrecieve",prefix+"hitrecieve_2",prefix+"idle",prefix+"idle_gun",
-  "idle_gun_pointing",prefix+"idle_gun_shoot",prefix+"idle_Neutral",prefix+"idle_sword",prefix+"interact",
-  "kick_left",prefix+"kick_right",prefix+"punch_left",prefix+"punch_right",prefix+"roll",prefix+"run",prefix+"run_back",
-  "run_left",prefix+"run_right",prefix+"run_shoot",prefix+"sword_slash",prefix+"walk",prefix+"wave"
+  prefix+"death",
+  prefix+"gun_shoot",
+  prefix+"hitrecieve",
+  prefix+"hitrecieve_2",
+  prefix+"idle",
+  prefix+"idle_gun",
+  prefix+"idle_gun_pointing",
+  prefix+"idle_gun_shoot",
+  prefix+"idle_neutral",
+  prefix+"idle_sword",
+  prefix+"interact",
+  prefix+"kick_left",
+  prefix+"kick_right",
+  prefix+"punch_left",
+  prefix+"punch_right",
+  prefix+"roll",
+  prefix+"run",
+  prefix+"run_back",
+  prefix+"run_left",
+  prefix+"run_right",
+  prefix+"run_shoot",
+  prefix+"sword_slash",
+  prefix+"walk",
+  prefix+"wave"
 ];
 
 class Character {
@@ -49,7 +69,7 @@ class Character {
 				this.mixer = new THREE.AnimationMixer(this.model);
 				this._prepareAnimations();
 
-				this.playAnimation(prefix+"Idle");
+				this.playAnimation(prefix+"idle");
 
 				if (this.onLoadCallback) {
 					this.onLoadCallback(this);
@@ -70,8 +90,8 @@ class Character {
 		});
 
 		this.actionClips = {}; // Reset actionClips
-			console.log(AnimsNames)
-			console.log(animationMap)
+			// console.log(AnimsNames)
+			// console.log(animationMap)
 
 			
 		AnimsNames.forEach((name) => {
@@ -84,19 +104,19 @@ class Character {
 		});
 
 		// Fallback for idle animation if not found
-		if (!this.actionClips.idle) {
+		if (!this.actionClips[prefix+"idle"]) {
 			console.warn(
 				`"idle" animation not found. Using first available clip as fallback.`
 			);
 			if (this.gltf.animations.length > 0) {
 				const firstClip = this.gltf.animations[0];
-				this.actionClips.idle = this.mixer.clipAction(firstClip);
+				this.actionClips[prefix+"idle"] = this.mixer.clipAction(firstClip);
 			}
 		}
 	}
 
 	playAnimation(name) {
-		const newAction = this.actionClips[name.toLowerCase()];
+		const newAction = this.actionClips[name];
 
 		if (!newAction) {
 			console.warn(`Animation state "${name}" is not configured or found.`);
