@@ -16,6 +16,9 @@ class ThirdPersonController {
 				minZoom: 2,
 				maxZoom: 10,
 				zoomSpeed: 2,
+				initialPitch: -0.5,
+				minPitch: -1,
+				maxPitch: -0.05,
 			},
 			player: {
 				speed: 5,
@@ -24,7 +27,12 @@ class ThirdPersonController {
 		};
 
 		// State
-		this.cameraEuler = new THREE.Euler(0, 0, 0, "YXZ");
+		this.cameraEuler = new THREE.Euler(
+			this.conf.camera.initialPitch,
+			0,
+			0,
+			"YXZ"
+		);
 		this.PI_2 = Math.PI / 2;
 
 		this.target = new THREE.Object3D();
@@ -40,8 +48,8 @@ class ThirdPersonController {
 		this.cameraEuler.y -= UserInput.mouseDeltaX * this.conf.sensitivity;
 		this.cameraEuler.x -= UserInput.mouseDeltaY * this.conf.sensitivity;
 		this.cameraEuler.x = Math.max(
-			-this.PI_2,
-			Math.min(this.PI_2, this.cameraEuler.x)
+			this.conf.camera.minPitch,
+			Math.min(this.conf.camera.maxPitch, this.cameraEuler.x)
 		); // Clamp vertical rotation
 
 		// === 2. Calculate Movement Direction ===
