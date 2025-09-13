@@ -1,10 +1,10 @@
 class ResourceManager {
     constructor() {
         this.itemModels = {
-            wood: { model: 'models/wood.gltf', scale: 0.1, color: 0x8B4513 }, // Brown
-            stone: { model: 'models/stone.gltf', scale: 0.05, color: 0x808080 }, // Grey
-            herb: { model: 'models/herb.gltf', scale: 0.2, color: 0x00ff00 }, // Green
-            iron: { model: 'models/iron.gltf', scale: 0.05, color: 0x43464B }, // Dark Grey
+            wood: { model: 'models/ressources/Wood.glb', scale: 0.1, color: 0x8B4513 }, // Brown
+            stone: { model: 'models/ressources/Rock.glb', scale: 0.05, color: 0x808080 }, // Grey
+            herb: { model: 'models/ressources/Plant.glb', scale: 0.2, color: 0x00ff00 }, // Green
+            iron: { model: 'models/ressources/Rock Medium.glb', scale: 0.05, color: 0x43464B }, // Dark Grey
         };
 
         this.maxInstancesPerType = {
