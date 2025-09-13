@@ -21,6 +21,7 @@ let tooltipElement = null;
 const itemDetails = {
 	wood: { name: "Bois", description: "Un morceau de bois de base." },
 	stone: { name: "Pierre", description: "Une pierre grise et solide." },
+	herb: { name: "Herbe", description: "Un peu d'herbe." },
 	iron: { name: "Fer", description: "Un minerai de fer brut." },
 };
 
@@ -75,6 +76,7 @@ function closeInventory() {
 const itemColors = {
 	wood: 0x8b4513, // Brown
 	stone: 0x808080, // Grey
+	herb: 0x00ff00, // Green
 	iron: 0x43464b, // Dark silver
 };
 

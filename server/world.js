@@ -1,10 +1,18 @@
 const worldItems = [];
 let itemCounter = 0;
-const itemTypes = ["wood", "stone", "iron"];
+const itemTypes = ["wood", "stone", "herb", "iron"];
+
+const itemTypes2 = {
+    wood: { model: 'models/ressources/Wood.glb', scale: 0.1, color: 0x8B4513 }, // Brown
+    stone: { model: 'models/ressources/Rock.glb', scale: 0.05, color: 0x808080 }, // Grey
+    herb: { model: 'models/ressources/Plant.glb', scale: 0.2, color: 0x00ff00 }, // Green
+    iron: { model: 'models/ressources/Rock Medium.glb', scale: 0.05, color: 0x43464B }, // Dark Grey
+};
+
 let io;
 
-const MAX_ITEMS_PER_TYPE = 10;
-const RESPAWN_DELAY = 5000; // 5 seconds
+const MAX_ITEMS_PER_TYPE = 5;
+const RESPAWN_DELAY = 500000; // 500 seconds
 
 function spawnItem(type) {
     itemCounter++;
