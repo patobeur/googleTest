@@ -70,14 +70,33 @@ class Character {
 	}
 
 	_findAnimation(animationMap, name) {
+		const alternativeNames = {
+			idle: ["tpose", "t-pose"],
+			run: ["walk", "running"],
+			jump: ["jumping"],
+		};
+
 		// Exact match first
 		let action = animationMap.get(name);
 		if (action) return action;
 
-		// Partial match
+		// Partial match for the original name
 		for (const [clipName, clipAction] of animationMap.entries()) {
 			if (clipName.includes(name)) {
 				return clipAction;
+			}
+		}
+
+		// Check for alternative names
+		if (alternativeNames[name]) {
+			for (const altName of alternativeNames[name]) {
+				action = animationMap.get(altName);
+				if (action) return action;
+				for (const [clipName, clipAction] of animationMap.entries()) {
+					if (clipName.includes(altName)) {
+						return clipAction;
+					}
+				}
 			}
 		}
 
