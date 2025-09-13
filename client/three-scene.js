@@ -94,7 +94,7 @@ function animate(gameLogic) {
 
 function addPlayer(playerInfo) {
 	const modelName =
-		playerInfo.model === "female" ? "Kimono_Female.gltf" : "Kimono_Male.gltf";
+		playerInfo.model === "female" ? "Adventurer_Female.glb" : "Adventurer_Male.glb";
 	const modelUrl = `/toon/${modelName}`;
 
 	const isLocal = playerInfo.id === localPlayerId;
