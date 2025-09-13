@@ -2,11 +2,13 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 
+		const prefix = "characterarmature|"
+
 const AnimsNames = [
-  "Death","Gun_Shoot","HitRecieve","HitRecieve_2","Idle","Idle_Gun",
-  "Idle_Gun_Pointing","Idle_Gun_Shoot","Idle_Neutral","Idle_Sword","Interact",
-  "Kick_Left","Kick_Right","Punch_Left","Punch_Right","Roll","Run","Run_Back",
-  "Run_Left","Run_Right","Run_Shoot","Sword_Slash","Walk","Wave"
+  prefix+"death",prefix+"gun_shoot",prefix+"hitrecieve",prefix+"hitrecieve_2",prefix+"idle",prefix+"idle_gun",
+  "idle_gun_pointing",prefix+"idle_gun_shoot",prefix+"idle_Neutral",prefix+"idle_sword",prefix+"interact",
+  "kick_left",prefix+"kick_right",prefix+"punch_left",prefix+"punch_right",prefix+"roll",prefix+"run",prefix+"run_back",
+  "run_left",prefix+"run_right",prefix+"run_shoot",prefix+"sword_slash",prefix+"walk",prefix+"wave"
 ];
 
 class Character {
@@ -47,7 +49,7 @@ class Character {
 				this.mixer = new THREE.AnimationMixer(this.model);
 				this._prepareAnimations();
 
-				this.playAnimation("idle");
+				this.playAnimation(prefix+"Idle");
 
 				if (this.onLoadCallback) {
 					this.onLoadCallback(this);
@@ -61,17 +63,21 @@ class Character {
 	}
 
 	_prepareAnimations() {
+		
 		const animationMap = new Map();
 		this.gltf.animations.forEach((clip) => {
 			animationMap.set(clip.name.toLowerCase(), this.mixer.clipAction(clip));
 		});
 
 		this.actionClips = {}; // Reset actionClips
+			console.log(AnimsNames)
+			console.log(animationMap)
 
+			
 		AnimsNames.forEach((name) => {
-			const action = animationMap.get(name.toLowerCase());
+			const action = animationMap.get(name);
 			if (action) {
-				this.actionClips[name.toLowerCase()] = action;
+				this.actionClips[name] = action;
 			} else {
 				console.warn(`Animation "${name}" not found in the model.`);
 			}
@@ -80,7 +86,7 @@ class Character {
 		// Fallback for idle animation if not found
 		if (!this.actionClips.idle) {
 			console.warn(
-				`"Idle" animation not found. Using first available clip as fallback.`
+				`"idle" animation not found. Using first available clip as fallback.`
 			);
 			if (this.gltf.animations.length > 0) {
 				const firstClip = this.gltf.animations[0];
