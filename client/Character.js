@@ -2,6 +2,35 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone } from "three/addons/utils/SkeletonUtils.js";
 
+const prefix = "characterarmature|"
+
+const AnimsNames = [
+  prefix+"death",
+  prefix+"gun_shoot",
+  prefix+"hitrecieve",
+  prefix+"hitrecieve_2",
+  prefix+"idle",
+  prefix+"idle_gun",
+  prefix+"idle_gun_pointing",
+  prefix+"idle_gun_shoot",
+  prefix+"idle_neutral",
+  prefix+"idle_sword",
+  prefix+"interact",
+  prefix+"kick_left",
+  prefix+"kick_right",
+  prefix+"punch_left",
+  prefix+"punch_right",
+  prefix+"roll",
+  prefix+"run",
+  prefix+"run_back",
+  prefix+"run_left",
+  prefix+"run_right",
+  prefix+"run_shoot",
+  prefix+"sword_slash",
+  prefix+"walk",
+  prefix+"wave"
+];
+
 class Character {
 	constructor(scene, options) {
 		this.scene = scene;
@@ -11,12 +40,7 @@ class Character {
 
 		this.gltf = null;
 		this.mixer = null;
-		this.animations = new Map();
-		this.actionClips = {
-			idle: null,
-			run: null,
-			jump: null,
-		};
+		this.actionClips = {};
 		this.currentAction = null;
 		this.model = null;
 
@@ -45,7 +69,7 @@ class Character {
 				this.mixer = new THREE.AnimationMixer(this.model);
 				this._prepareAnimations();
 
-				this.playAnimation("idle");
+				this.playAnimation(prefix+"idle");
 
 				if (this.onLoadCallback) {
 					this.onLoadCallback(this);
@@ -59,41 +83,40 @@ class Character {
 	}
 
 	_prepareAnimations() {
+		
 		const animationMap = new Map();
 		this.gltf.animations.forEach((clip) => {
 			animationMap.set(clip.name.toLowerCase(), this.mixer.clipAction(clip));
 		});
 
-		this.actionClips.idle = this._findAnimation(animationMap, "idle");
-		this.actionClips.run = this._findAnimation(animationMap, "run");
-		this.actionClips.jump = this._findAnimation(animationMap, "jump");
-	}
+		this.actionClips = {}; // Reset actionClips
+			// console.log(AnimsNames)
+			// console.log(animationMap)
 
-	_findAnimation(animationMap, name) {
-		// Exact match first
-		let action = animationMap.get(name);
-		if (action) return action;
+			
+		AnimsNames.forEach((name) => {
+			const action = animationMap.get(name);
+			if (action) {
+				this.actionClips[name] = action;
+			} else {
+				console.warn(`Animation "${name}" not found in the model.`);
+			}
+		});
 
-		// Partial match
-		for (const [clipName, clipAction] of animationMap.entries()) {
-			if (clipName.includes(name)) {
-				return clipAction;
+		// Fallback for idle animation if not found
+		if (!this.actionClips[prefix+"idle"]) {
+			console.warn(
+				`"idle" animation not found. Using first available clip as fallback.`
+			);
+			if (this.gltf.animations.length > 0) {
+				const firstClip = this.gltf.animations[0];
+				this.actionClips[prefix+"idle"] = this.mixer.clipAction(firstClip);
 			}
 		}
-
-		// Fallback to the first animation if no match is found for idle/run
-		if (name === "idle" || name === "run") {
-			console.warn(
-				`Animation clip for "${name}" not found. Using first available clip.`
-			);
-			return animationMap.values().next().value || null;
-		}
-
-		return null;
 	}
 
 	playAnimation(name) {
-		const newAction = this.actionClips[name.toLowerCase()];
+		const newAction = this.actionClips[name];
 
 		if (!newAction) {
 			console.warn(`Animation state "${name}" is not configured or found.`);

@@ -83,9 +83,9 @@ class ThirdPersonController {
 			);
 			playerModel.position.add(moveVector);
 
-			this.character.playAnimation("run");
+			this.character.playAnimation("characterarmature|"+"run");
 		} else {
-			this.character.playAnimation("idle");
+			this.character.playAnimation("characterarmature|"+"idle");
 		}
 
 		// === 5. Update Camera Position and Target ===
