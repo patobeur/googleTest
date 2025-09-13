@@ -10,14 +10,11 @@ const conf = {
 		sensitivity: 0.002,
 		distance: 10,
         lerpSpeed: 0.1, // How quickly the camera follows
-        initialPitch: -0.3, // Starting vertical angle
-        minPitch: -0.2, // Angle to prevent going under the ground
-        maxPitch: 1.0, // Angle to prevent going directly overhead
 	},
 };
 
 // Variables for camera rotation
-let euler = new THREE.Euler(conf.camera.initialPitch, 0, 0, "YXZ");
+let euler = new THREE.Euler(0, 0, 0, "YXZ");
 const PI_2 = Math.PI / 2;
 
 // Temp vectors to avoid creating new ones in the loop
@@ -60,7 +57,7 @@ function update(player, zoomDelta) {
 	// --- Rotation ---
 	// Vertical rotation (pitch) is controlled by the mouse.
 	euler.x -= UserInput.mouseDeltaY * conf.camera.sensitivity;
-	euler.x = Math.max(conf.camera.minPitch, Math.min(conf.camera.maxPitch, euler.x)); // Clamp vertical rotation
+	euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x)); // Clamp vertical rotation
 
     // Horizontal rotation (yaw) is now driven by the player's rotation.
     // We will smoothly interpolate to the player's yaw.
