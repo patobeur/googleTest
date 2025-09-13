@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Character } from "./Character.js";
 import { ThirdPersonController } from "./ThirdPersonController.js";
 import { UserInput } from "./user-input.js";
+import { resourceManager } from "./resource-manager.js";
 
 const clock = new THREE.Clock();
 const players = {};
@@ -165,26 +166,32 @@ function removePlayer(id) {
 	}
 }
 
-const itemColors = {
-	wood: 0x8b4513, // Brown
-	stone: 0x808080, // Grey
-	iron: 0x43464b, // Dark silver
-};
-
 function addItem(itemInfo) {
+    if (!resourceManager.canDisplayItem(itemInfo.type)) {
+        return;
+    }
+
+    const itemModelInfo = resourceManager.itemModels[itemInfo.type];
+    if (!itemModelInfo) {
+        console.warn(`No model info for item type: ${itemInfo.type}`);
+        return;
+    }
+
 	const geometry = new THREE.BoxGeometry(1, 1, 1);
-	const color = itemColors[itemInfo.type] || 0xffffff;
-	const material = new THREE.MeshStandardMaterial({ color });
+	const material = new THREE.MeshStandardMaterial({ color: itemModelInfo.color || 0xffffff });
 	const cube = new THREE.Mesh(geometry, material);
+
 	cube.position.set(itemInfo.x, itemInfo.y, itemInfo.z);
 	scene.add(cube);
 	worldItems[itemInfo.id] = { ...itemInfo, mesh: cube };
+    resourceManager.registerItem(itemInfo.type);
 }
 
 function removeItem(itemId) {
 	const item = worldItems[itemId];
 	if (item) {
 		scene.remove(item.mesh);
+        resourceManager.unregisterItem(item.type);
 		delete worldItems[itemId];
 	}
 }
