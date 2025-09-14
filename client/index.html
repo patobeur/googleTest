@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>Gauntlet</title>
-		<link rel="stylesheet" href="style.css" />
+		<link rel="stylesheet" href="src/css/style.css" />
 	</head>
 	<body>
 		<div id="auth-container">
@@ -47,6 +47,15 @@
 				<button id="reset-button">Reset Password</button>
 			</div>
 		</div>
+
+		<div id="character-selection-container" style="display: none">
+			<h2>Select Your Character</h2>
+			<div id="character-list">
+				<!-- Character cards will be injected here -->
+			</div>
+			<button id="play-button" disabled>Play</button>
+		</div>
+
 		<div id="game-container" style="display: none">
 			<canvas id="game-canvas"></canvas>
 
@@ -132,6 +141,6 @@
 		</script>
 
 		<script src="/socket.io/socket.io.js"></script>
-		<script type="module" src="main.js"></script>
+		<script type="module" src="src/js/main.js"></script>
 	</body>
 </html>

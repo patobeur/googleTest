@@ -1,4 +1,5 @@
 // client/ui.js
+import { CharacterSelection } from "./character-selection.js";
 
 // --- Menu, Modals, and Theme ---
 const menuIcon = document.getElementById("menu-icon");
@@ -231,8 +232,14 @@ function init() {
 
 	logoutLink.addEventListener("click", (e) => {
 		e.preventDefault();
-		localStorage.removeItem("token");
-		window.location.reload();
+		const token = localStorage.getItem("token");
+		if (token) {
+			document.getElementById("game-container").style.display = "none";
+			CharacterSelection.show(token);
+		} else {
+			// Fallback if token is somehow lost
+			window.location.reload();
+		}
 	});
 
 	closeBtns.forEach((btn) => {

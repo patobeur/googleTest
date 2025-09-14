@@ -1,27 +1,11 @@
 // client/auth.js
 
-// This function will be passed from main.js to be called on successful login
-let onLoginSuccess = null;
+// This function will be passed from main.js to be called on successful authentication
+let onAuthSuccess = null;
+let authContainer, gameContainer, loginForm, registerForm, forgotPasswordForm, resetPasswordForm;
+let showRegister, showLoginFromRegister, showForgotPassword, showLoginFromForgot;
+let loginButton, registerButton, forgotButton, resetButton;
 
-// DOM Elements
-const authContainer = document.getElementById("auth-container");
-const gameContainer = document.getElementById("game-container");
-const loginForm = document.getElementById("login-form");
-const registerForm = document.getElementById("register-form");
-const forgotPasswordForm = document.getElementById("forgot-password-form");
-const resetPasswordForm = document.getElementById("reset-password-form");
-
-const showRegister = document.getElementById("show-register");
-const showLoginFromRegister = document.getElementById(
-	"show-login-from-register"
-);
-const showForgotPassword = document.getElementById("show-forgot-password");
-const showLoginFromForgot = document.getElementById("show-login-from-forgot");
-
-const loginButton = document.getElementById("login-button");
-const registerButton = document.getElementById("register-button");
-const forgotButton = document.getElementById("forgot-button");
-const resetButton = document.getElementById("reset-button");
 
 // Show/Hide forms
 function showForm(formToShow) {
@@ -34,13 +18,24 @@ function showForm(formToShow) {
 	formToShow.style.display = "block";
 }
 
-function showGame() {
-	authContainer.style.display = "none";
-	gameContainer.style.display = "block";
-}
+function init(authCallback) {
+	onAuthSuccess = authCallback;
 
-function init(loginCallback) {
-	onLoginSuccess = loginCallback;
+    // DOM Elements
+    authContainer = document.getElementById("auth-container");
+    gameContainer = document.getElementById("game-container");
+    loginForm = document.getElementById("login-form");
+    registerForm = document.getElementById("register-form");
+    forgotPasswordForm = document.getElementById("forgot-password-form");
+    resetPasswordForm = document.getElementById("reset-password-form");
+    showRegister = document.getElementById("show-register");
+    showLoginFromRegister = document.getElementById("show-login-from-register");
+    showForgotPassword = document.getElementById("show-forgot-password");
+    showLoginFromForgot = document.getElementById("show-login-from-forgot");
+    loginButton = document.getElementById("login-button");
+    registerButton = document.getElementById("register-button");
+    forgotButton = document.getElementById("forgot-button");
+    resetButton = document.getElementById("reset-button");
 
 	// Setup form event listeners
 	showRegister.addEventListener("click", (e) => {
@@ -90,9 +85,8 @@ function init(loginCallback) {
 		if (response.ok) {
 			const { token } = await response.json();
 			localStorage.setItem("token", token);
-			showGame();
-			if (onLoginSuccess) {
-				onLoginSuccess(token);
+			if (onAuthSuccess) {
+				onAuthSuccess(token);
 			}
 		} else {
 			const data = await response.json();
@@ -132,9 +126,8 @@ function init(loginCallback) {
 	// Check for existing token on page load
 	const token = localStorage.getItem("token");
 	if (token) {
-		showGame();
-		if (onLoginSuccess) {
-			onLoginSuccess(token);
+		if (onAuthSuccess) {
+			onAuthSuccess(token);
 		}
 	} else {
 		showForm(loginForm);

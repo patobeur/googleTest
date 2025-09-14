@@ -5,9 +5,14 @@ import { ThreeScene } from "./three-scene.js";
 import { UserInput } from "./user-input.js";
 import { Auth } from "./auth.js";
 import { UI } from "./ui.js";
+import { CharacterSelection } from "./character-selection.js";
 // Game Logic (to be initialized after login)
-function initializeGame(token) {
+function initializeGame(token, character) {
+	// Show the game container
+	document.getElementById("game-container").style.display = "block";
+
 	// 1. Initialisation des modules
+	// For now, we use localStorage, but this should come from the character object
 	const savedModel = localStorage.getItem("playerModel") || "male";
 	const savedColor = localStorage.getItem("playerColor") || "#ff0000";
 
@@ -178,7 +183,9 @@ function initializeGame(token) {
 
 // --- Main Execution ---
 function main() {
-	Auth.init(initializeGame);
+	// The new flow: Auth -> CharacterSelection -> Game
+	CharacterSelection.init(initializeGame);
+	Auth.init(CharacterSelection.show);
 }
 
-window.addEventListener("load", main);
+window.addEventListener("DOMContentLoaded", main);
