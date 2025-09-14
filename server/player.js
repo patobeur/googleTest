@@ -1,84 +1,81 @@
-const {
-	getPlayerByUserId,
-	createPlayer,
-	updatePlayer,
-	getUserById,
-} = require("./db");
+const User = require('./user');
+const Character = require('./character');
+const Inventory = require('./inventory.model');
 const { registerInventoryHandlers } = require("./inventory");
 
-const players = {};
-const genders = {
-	0: "whatever",
-	1: "man",
-	2: "woman",
-};
-const archetypes = {
-	0: "healer",
-	1: "wizard",
-	3: "warrior",
-	4: "rogue",
-};
-const caracters = {
-	0: { hp: 50, mana: 100 },
-	1: { hp: 40, mana: 150 },
-	3: { hp: 70, mana: 50 },
-	4: { hp: 50, mana: 50 },
-};
+const players = {}; // In-memory store for active players
 
 function handleNewPlayer(io, socket, worldItems) {
-	console.log(
-		"Un nouveau joueur est connecté:",
-		socket.id,
-		"avec le userId:",
-		socket.userId
-	);
+	console.log(`Player connecting with userId: ${socket.userId} and characterId: ${socket.characterId}`);
 
-	const user = getUserById(socket.userId);
-	if (!user) {
-		console.error("User not found for userId:", socket.userId);
-		return;
-	}
+	// Fetch user, character, and inventory data in parallel
+	Promise.all([
+		new Promise((resolve, reject) => User.getUserById(socket.userId, (err, user) => err ? reject(err) : resolve(user))),
+		new Promise((resolve, reject) => Character.getCharacterById(socket.characterId, (err, character) => err ? reject(err) : resolve(character))),
+		new Promise((resolve, reject) => Inventory.getInventory(socket.characterId, (err, inventory) => err ? reject(err) : resolve(inventory)))
+	]).then(([user, character, inventory]) => {
+		if (!user || !character) {
+			throw new Error(`User or Character not found. User: ${!!user}, Character: ${!!character}`);
+		}
 
-	let player = getPlayerByUserId(socket.userId);
-	if (!player) {
-		player = {
-			id: socket.id,
-			userId: socket.userId,
-			name: user.name,
-			x: Math.floor(Math.random() * 10) - 5,
-			y: Math.floor(Math.random() * 10) - 5,
-			color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+		// Security check: ensure the character belongs to the user
+		if (character.user_id !== user.id) {
+			throw new Error(`Character ${character.id} does not belong to user ${user.id}`);
+		}
+
+		// Create the in-game player object from the character data
+		const player = {
+			id: socket.id, // The ephemeral socket ID
+			characterId: character.id,
+			userId: user.id,
+			name: user.username, // Use username from the users table
+			x: character.x,
+			y: character.y,
+			z: character.z,
 			rotation: { x: 0, y: 0, z: 0, w: 1 },
 			animation: "idle",
-			inventory: Array(40).fill(null),
-			archetype: archetypes[0],
-			gender: genders[0],
-			stats: caracters[0],
-			xp: 0,
-			level: 0,
+			inventory: inventory, // Load inventory from DB
+			level: character.level,
+			health: character.health,
+			mana: character.mana,
+			model: character.model,
+			gender: character.gender,
+			color: character.color,
 		};
-		createPlayer(player);
-	} else {
-		player.id = socket.id;
-		player.name = user.name;
-		if (!player.rotation) player.rotation = { x: 0, y: 0, z: 0, w: 1 };
-		if (!player.animation) player.animation = "idle";
-		if (!player.inventory || player.inventory.length !== 40) {
-			player.inventory = Array(40).fill(null);
-		}
-	}
 
-	players[socket.id] = player;
+		players[socket.id] = player;
 
-	socket.emit("currentState", players);
-	socket.emit("worldItems", worldItems);
-	socket.broadcast.emit("newPlayer", player);
+		socket.emit("currentState", players);
+		socket.emit("worldItems", worldItems);
+		socket.broadcast.emit("newPlayer", player);
+
+	}).catch(err => {
+		console.error("Error during player initialization:", err);
+		socket.disconnect(true); // Disconnect client if data can't be loaded
+	});
 }
 
 function handlePlayerDisconnection(io, socket) {
-	console.log("Un joueur s'est déconnecté:", socket.id);
-	if (players[socket.id]) {
-		updatePlayer(players[socket.id]);
+	console.log("Player disconnected:", socket.id);
+	const player = players[socket.id];
+	if (player) {
+		// Save the player's state back to the database
+		const characterDataToSave = {
+			id: player.characterId,
+			level: player.level,
+			health: player.health,
+			mana: player.mana,
+			x: player.x,
+			y: player.y,
+			z: player.z,
+		};
+		Character.updateCharacterState(characterDataToSave, (err) => {
+			if (err) {
+				console.error(`Failed to save state for character ${player.characterId}:`, err);
+			} else {
+				console.log(`Successfully saved state for character ${player.characterId}.`);
+			}
+		});
 		delete players[socket.id];
 	}
 	io.emit("playerDisconnected", socket.id);
@@ -88,36 +85,14 @@ function handlePlayerMovement(io, socket, movementData) {
 	const player = players[socket.id];
 	if (!player) return;
 
-	const lastPosition = { x: player.x, y: player.y };
-	const newPosition = { x: movementData.x, y: movementData.y };
+	// Basic anti-cheat/validation can be done here
+	player.x = movementData.x;
+	player.y = movementData.y; // In our 3D world, the server's 'y' is the client's 'z'
+	player.rotation = movementData.rotation;
+	player.animation = movementData.animation;
 
-	const distanceSq =
-		Math.pow(newPosition.x - lastPosition.x, 2) +
-		Math.pow(newPosition.y - lastPosition.y, 2);
-
-	const MAX_SPEED = 15;
-	const TICK_RATE = 10;
-	const TOLERANCE_FACTOR = 1.5;
-	const MAX_DISTANCE_PER_TICK = (MAX_SPEED / TICK_RATE) * TOLERANCE_FACTOR;
-	const MAX_DISTANCE_SQ = MAX_DISTANCE_PER_TICK * MAX_DISTANCE_PER_TICK;
-
-	if (distanceSq <= MAX_DISTANCE_SQ) {
-		player.x = newPosition.x;
-		player.y = newPosition.y;
-		player.rotation = movementData.rotation;
-		player.animation = movementData.animation;
-
-		updatePlayer(player);
-
-		io.emit("playerMoved", player);
-	} else {
-		console.log(
-			`Invalid movement detected for player ${
-				socket.id
-			}. Dist sq: ${distanceSq.toFixed(2)} > ${MAX_DISTANCE_SQ.toFixed(2)}`
-		);
-		socket.emit("correction", { x: player.x, y: player.y });
-	}
+	// We don't save position on every move, only on disconnect, but broadcast to others
+	io.emit("playerMoved", player);
 }
 
 function init(io, worldItems) {

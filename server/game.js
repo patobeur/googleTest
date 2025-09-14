@@ -15,7 +15,12 @@ function initGame(io) {
 			if (err) {
 				return next(new Error("Authentication error"));
 			}
+			const characterId = socket.handshake.auth.characterId;
+			if (!characterId) {
+				return next(new Error("Missing characterId"));
+			}
 			socket.userId = decoded.userId;
+			socket.characterId = characterId;
 			next();
 		});
 	});

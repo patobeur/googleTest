@@ -24,8 +24,9 @@ function initializeGame(token, character) {
 	const socket = io({
 		auth: {
 			token,
-			model: savedModel,
-			color: savedColor,
+			characterId: character.id,
+			model: savedModel, // This should probably come from the character object too
+			color: savedColor,  // This should also come from the character object
 		},
 	});
 	let myId = null;

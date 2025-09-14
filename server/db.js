@@ -1,67 +1,47 @@
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./database.sqlite');
 
-// Configure the database
-const adapter = new FileSync('db.json');
-const db = low(adapter);
+db.serialize(() => {
+    // Création de la table des utilisateurs
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        resetPasswordToken TEXT,
+        resetPasswordExpires INTEGER
+    )`);
 
-// Set default data
-function initializeDatabase() {
-    db.defaults({ users: [], players: [] }).write();
-}
+    // Création de la table des personnages
+    // NOTE: Dropping the table on every start is for development only to apply schema changes.
+    db.run("DROP TABLE IF EXISTS characters");
+    db.run(`CREATE TABLE IF NOT EXISTS characters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT,
+        class TEXT,
+        gender TEXT,
+        model TEXT,
+        color TEXT,
+        level INTEGER,
+        health INTEGER,
+        mana INTEGER,
+        x REAL,
+        y REAL,
+        z REAL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    )`);
 
-// User functions
-function getUserByEmail(email) {
-    return db.get('users').find({ email }).value();
-}
+    // Création de la table de l'inventaire
+    db.run("DROP TABLE IF EXISTS inventory");
+    db.run(`CREATE TABLE IF NOT EXISTS inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        character_id INTEGER NOT NULL,
+        slot_index INTEGER NOT NULL,
+        item_type TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        FOREIGN KEY (character_id) REFERENCES characters(id),
+        UNIQUE(character_id, slot_index)
+    )`);
+});
 
-function getUserById(id) {
-    return db.get('users').find({ id }).value();
-}
-
-function createUser(user) {
-    db.get('users').push(user).write();
-}
-
-function updateUser(user) {
-    db.get('users').find({ id: user.id }).assign(user).write();
-}
-
-function getUserByResetToken(token) {
-    const user = db.get('users').find({ resetPasswordToken: token }).value();
-    if (user && user.resetPasswordExpires > Date.now()) {
-        return user;
-    }
-    return null;
-}
-
-// Player functions
-function getPlayerByUserId(userId) {
-    return db.get('players').find({ userId }).value();
-}
-
-function createPlayer(player) {
-    db.get('players').push(player).write();
-}
-
-function updatePlayer(player) {
-    if (!player || !player.userId) {
-        console.error("Attempted to update a player without a userId.", player);
-        return;
-    }
-    const { id, ...playerData } = player; // Don't save the ephemeral socket.id
-    db.get('players').find({ userId: player.userId }).assign(playerData).write();
-}
-
-module.exports = {
-    initializeDatabase,
-    getUserByEmail,
-    getUserById,
-    createUser,
-    updateUser,
-    getUserByResetToken,
-    getPlayerByUserId,
-    createPlayer,
-    updatePlayer,
-    db
-};
+module.exports = db;

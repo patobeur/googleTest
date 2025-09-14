@@ -91,15 +91,16 @@ function updateInventory(inventory) {
 		slotDiv.dataset.slotIndex = i;
 
 		const slotData = inventory[i];
-		if (slotData && slotData.item) {
+		if (slotData) { // Check if the slot has data
 			const itemDiv = document.createElement("div");
 			itemDiv.className = "inventory-item";
 
-			const color = itemColors[slotData.item.type] || "#ff9800";
+			const color = itemColors[slotData.type] || "#ff9800"; // Access type directly
 			itemDiv.style.backgroundColor = `#${color.toString(16).padStart(6, "0")}`;
 
 			itemDiv.draggable = true;
-			itemDiv.dataset.itemId = slotData.item.id;
+			// No item.id on the slot object anymore, this can be removed.
+			// itemDiv.dataset.itemId = slotData.item.id;
 
 			itemDiv.addEventListener("dragstart", (e) => {
 				e.dataTransfer.setData(
@@ -110,7 +111,7 @@ function updateInventory(inventory) {
 
 			// Tooltip events
 			itemDiv.addEventListener("mouseenter", (e) => {
-				const details = itemDetails[slotData.item.type];
+				const details = itemDetails[slotData.type]; // Access type directly
 				if (!details) return;
 
 				tooltipElement.innerHTML = `
