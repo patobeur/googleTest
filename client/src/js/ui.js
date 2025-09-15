@@ -104,9 +104,10 @@ function updateInventory(inventory) {
 
 			itemDiv.addEventListener("dragstart", (e) => {
 				e.dataTransfer.setData(
-					"application/json",
+					"text/plain",
 					JSON.stringify({ fromIndex: i })
 				);
+				console.log({ fromIndex: i })
 			});
 
 			// Tooltip events
@@ -150,12 +151,14 @@ document.body.addEventListener("drop", (e) => {
 	e.preventDefault();
 	if (e.target === document.body || e.target.id === "game-canvas") {
 		try {
-			const data = JSON.parse(e.dataTransfer.getData("application/json"));
+			const data = JSON.parse(e.dataTransfer.getData("text/plain"));
 			if (data && onDropItem) {
 				onDropItem(data.fromIndex);
 			}
 		} catch (error) {
 			// Ignore if data is not in the expected format
+			
+				console.log("Ignore if data is not in the expected format")
 		}
 	}
 });
@@ -306,7 +309,7 @@ function init() {
 	inventorySlots.addEventListener("drop", (e) => {
 		e.preventDefault();
 		try {
-			const data = JSON.parse(e.dataTransfer.getData("application/json"));
+			const data = JSON.parse(e.dataTransfer.getData("text/plain"));
 			if (!data) return;
 
 			const fromIndex = data.fromIndex;

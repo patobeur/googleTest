@@ -72,6 +72,7 @@ function registerInventoryHandlers(io, socket, players, worldItems) {
 	});
 
 	socket.on("dropItem", (slotIndex) => {
+		console.log('drop item')
 		const player = players[socket.id];
 		if (!player || slotIndex < 0 || slotIndex >= player.inventory.length) return;
 
