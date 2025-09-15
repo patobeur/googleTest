@@ -18,7 +18,11 @@ router.post('/register', (req, res) => {
         if (err) { return res.status(500).json({ message: 'Server error' }); }
         if (existingUser) { return res.status(400).json({ message: 'User already exists' }); }
 
-        User.createUser(email, password, (err, newUser) => {
+        // User.createUser(email, password, (err, newUser) => {
+        //     if (err) { return res.status(500).json({ message: 'Failed to create user' }); }
+        //     res.status(201).json({ message: 'User created successfully', userId: newUser.id });
+        // });
+        User.createUser(email, password, name, (err, newUser) => {
             if (err) { return res.status(500).json({ message: 'Failed to create user' }); }
             res.status(201).json({ message: 'User created successfully', userId: newUser.id });
         });

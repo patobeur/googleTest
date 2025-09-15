@@ -6,6 +6,7 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
+        name TEXT,
         password TEXT,
         resetPasswordToken TEXT,
         resetPasswordExpires INTEGER
@@ -22,6 +23,7 @@ db.serialize(() => {
         color TEXT,
         level INTEGER,
         health INTEGER,
+        xp_point INTEGER,
         mana INTEGER,
         x REAL,
         y REAL,
