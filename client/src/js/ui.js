@@ -1,4 +1,5 @@
 // client/ui.js
+import { logout } from "./logout.js";
 import { CharacterSelection } from "./character-selection.js";
 
 // --- Menu, Modals, and Theme ---
@@ -254,17 +255,7 @@ function init(socket) {
 
 	logoutLink.addEventListener("click", (e) => {
 		e.preventDefault();
-		const token = localStorage.getItem("token");
-		if (token) {
-			if (gameSocket) {
-				gameSocket.disconnect();
-			}
-			document.getElementById("game-container").style.display = "none";
-			CharacterSelection.show(token);
-		} else {
-			// Fallback if token is somehow lost
-			window.location.reload();
-		}
+		logout(gameSocket);
 	});
 
 	closeBtns.forEach((btn) => {

@@ -12,9 +12,9 @@ function initializeGame(token, character) {
 	document.getElementById("game-container").style.display = "block";
 
 	// 1. Initialisation des modules
-	// For now, we use localStorage, but this should come from the character object
-	const savedModel = localStorage.getItem("playerModel") || "male";
-	const savedColor = localStorage.getItem("playerColor") || "#ff0000";
+	// Use character data directly, not localStorage
+	const characterModel = character.model || "male";
+	const characterColor = character.color || "#ff0000";
 
 	ThreeScene.init(document.getElementById("game-canvas"));
 	UserInput.init();
@@ -24,14 +24,15 @@ function initializeGame(token, character) {
 		auth: {
 			token,
 			characterId: character.id,
-			model: savedModel, // This should probably come from the character object too
-			color: savedColor,  // This should also come from the character object
+			model: characterModel,
+			color: characterColor,
 		},
 	});
 	let myId = null;
 
-	// Pass socket to UI module
+	// Pass socket to UI module and initialize inventory
 	UI.init(socket);
+	UI.updateInventory(character.inventory);
 
 	socket.on("connect", () => {
 		myId = socket.id;

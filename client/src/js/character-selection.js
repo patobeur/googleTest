@@ -1,4 +1,5 @@
 // client/src/js/character-selection.js
+import { logout } from './logout.js';
 
 let onPlayCallback = null;
 let authToken = null;
@@ -46,11 +47,26 @@ async function fetchCharacters() {
         const response = await fetch('/api/characters', {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        if (!response.ok) throw new Error('Failed to fetch characters');
+
+        if (response.status === 401 || response.status === 403) {
+            // Token is invalid or expired, force logout
+            console.error("Authentication failed. Logging out.");
+            logout(null);
+            return;
+        }
+
+        if (!response.ok) {
+            // Handle other non-successful responses
+            throw new Error(`Failed to fetch characters: ${response.statusText}`);
+        }
+
         const characters = await response.json();
         renderCharacters(characters);
     } catch (error) {
         console.error("Error fetching characters:", error);
+        // Optionally, display a user-friendly error message on the UI
+        alert("Could not load characters. Please try logging in again.");
+        logout(null);
     }
 }
 
@@ -147,10 +163,7 @@ function init(playCallback) {
     });
 
     quitButton.addEventListener("click", () => {
-        hide();
-        authContainer.style.display = "block";
-        authToken = null;
-        localStorage.removeItem('token');
+        logout(null);
     });
 
     showCreationButton.addEventListener("click", () => {
