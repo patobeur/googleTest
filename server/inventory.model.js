@@ -31,24 +31,40 @@ function getInventory(characterId, callback) {
  * @param {function(Error)} callback - Callback to signal completion.
  */
 function saveInventory(characterId, inventory, callback) {
-    const deleteSql = "DELETE FROM inventory WHERE character_id = ?";
-
+    // Using a serialized block to ensure statements run in order.
     db.serialize(() => {
-        db.run(deleteSql, [characterId], (err) => {
-            if (err) {
-                return callback(err);
+        // Start the transaction.
+        db.run("BEGIN TRANSACTION;");
+
+        // Delete the old inventory for the character.
+        db.run("DELETE FROM inventory WHERE character_id = ?", [characterId]);
+
+        // Prepare the insert statement once.
+        const stmt = db.prepare("INSERT INTO inventory (character_id, slot_index, item_type, quantity) VALUES (?, ?, ?, ?)");
+
+        // Loop through the inventory and run an insert for each non-null item.
+        for (let i = 0; i < inventory.length; i++) {
+            const item = inventory[i];
+            if (item) {
+                stmt.run(characterId, i, item.type, item.quantity);
             }
+        }
 
-            const insertSql = `INSERT INTO inventory (character_id, slot_index, item_type, quantity) VALUES (?, ?, ?, ?)`;
-            const stmt = db.prepare(insertSql);
+        // Finalize the prepared statement.
+        stmt.finalize();
 
-            inventory.forEach((item, index) => {
-                if (item) { // Only save non-null slots
-                    stmt.run(characterId, index, item.type, item.quantity);
-                }
-            });
-
-            stmt.finalize(callback);
+        // Commit the transaction. The callback will be executed after the commit.
+        // If any statement above failed, the transaction will be rolled back by the database
+        // or the commit will fail, and the error will be passed to the callback.
+        db.run("COMMIT;", function(err) {
+            if (err) {
+                // If commit fails, explicitly try to rollback.
+                console.error("Commit failed, attempting to roll back.", err);
+                db.run("ROLLBACK;");
+                callback(err);
+            } else {
+                callback(null);
+            }
         });
     });
 }

@@ -12,8 +12,6 @@ db.serialize(() => {
     )`);
 
     // Création de la table des personnages
-    // NOTE: Dropping the table on every start is for development only to apply schema changes.
-    db.run("DROP TABLE IF EXISTS characters");
     db.run(`CREATE TABLE IF NOT EXISTS characters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
@@ -32,7 +30,6 @@ db.serialize(() => {
     )`);
 
     // Création de la table de l'inventaire
-    db.run("DROP TABLE IF EXISTS inventory");
     db.run(`CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         character_id INTEGER NOT NULL,

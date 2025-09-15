@@ -23,6 +23,7 @@ lerna-debug.log*
 
 # Database files
 server/database.sqlite
+database.sqlite
 
 # Lock files
 server/package-lock.json

@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const world = require("./world");
 const player = require("./player");
 
-const jwtSecret = process.env["SMTP_PASS"];
+const jwtSecret = process.env.JWT_SECRET;
 
 function initGame(io) {
 	// Middleware d'authentification Socket.IO
