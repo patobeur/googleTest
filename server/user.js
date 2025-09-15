@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 function getUserById(id, callback) {
-    const sql = `SELECT id, username FROM users WHERE id = ?`;
+    const sql = `SELECT id, username, name FROM users WHERE id = ?`;
     db.get(sql, [id], callback);
 }
 

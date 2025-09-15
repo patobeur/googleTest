@@ -1,17 +1,18 @@
 import * as THREE from "three";
-import { Character } from "./Character.js";
 import { ThirdPersonController } from "./ThirdPersonController.js";
 import { UserInput } from "./user-input.js";
 import { resourceManager } from "./resource-manager.js";
+import { PlayerManager } from "./player-manager.js"; // Import the new manager
 
 const clock = new THREE.Clock();
-const players = {};
+// const players = {}; // Removed, now in PlayerManager
 const worldItems = {};
-let scene, renderer, camera, thirdPersonController;
-let localPlayerId = null;
+let scene, renderer, camera; // Removed thirdPersonController from here
+// let localPlayerId = null; // Removed, now in PlayerManager
 
 function setLocalPlayerId(id) {
-	localPlayerId = id;
+	// localPlayerId = id; // Delegated
+    PlayerManager.setLocalPlayerId(id);
 }
 
 function init(canvas) {
@@ -24,6 +25,8 @@ function init(canvas) {
 		0.1,
 		1000
 	);
+
+    PlayerManager.initManager(scene, camera); // Initialize the PlayerManager
 
 	renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 	renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -55,30 +58,8 @@ function renderLoop() {
 	requestAnimationFrame(renderLoop);
 	const deltaTime = clock.getDelta();
 
-	if (thirdPersonController) {
-		thirdPersonController.update(deltaTime);
-	}
-
-	for (const id in players) {
-		const player = players[id];
-		if (player.character) {
-			player.character.update(deltaTime);
-
-			// Update name label position
-			if (player.nameLabel) {
-				const modelPosition = player.character.model.position.clone();
-				modelPosition.y += 3.5; // Adjust this value to position the label above the head
-				const screenPosition = modelPosition.project(camera);
-
-				const x = ((screenPosition.x + 1) / 2) * window.innerWidth;
-				const y = ((-screenPosition.y + 1) / 2) * window.innerHeight;
-
-				player.nameLabel.style.transform = `translate(-50%, -50%)`;
-				player.nameLabel.style.left = `${x}px`;
-				player.nameLabel.style.top = `${y}px`;
-			}
-		}
-	}
+    // The PlayerManager now handles updating the controller and all players
+    PlayerManager.update(deltaTime);
 
 	gameLogicCallback();
 
@@ -92,79 +73,11 @@ function animate(gameLogic) {
 	renderLoop();
 }
 
-function addPlayer(playerInfo) {
-	const modelName =
-		playerInfo.model === "female" ? "Adventurer_Female.glb" : "Adventurer_Male.glb";
-	const modelUrl = `/toon/${modelName}`;
+// addPlayer function removed
 
-	const isLocal = playerInfo.id === localPlayerId;
-	const character = new Character(scene, {
-		isLocal: isLocal,
-		onLoadCallback: (loadedCharacter) => {
-			loadedCharacter.setPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
+// updatePlayerPosition function removed
 
-			// Create name label
-			const nameLabel = document.createElement("div");
-			nameLabel.className = "name-label";
-			nameLabel.textContent = playerInfo.name;
-			document.getElementById("game-container").appendChild(nameLabel);
-
-			players[playerInfo.id] = {
-				...playerInfo,
-				character: loadedCharacter,
-				position: new THREE.Vector3(playerInfo.x, 0, playerInfo.y),
-				nameLabel: nameLabel,
-			};
-
-			if (isLocal) {
-				thirdPersonController = new ThirdPersonController({
-					camera: camera,
-					character: loadedCharacter,
-					scene: scene,
-				});
-			}
-		},
-	});
-
-	character.load(modelUrl);
-}
-
-function updatePlayerPosition(playerInfo) {
-	// Only update remote players, local player is updated by its controller
-	if (playerInfo.id === localPlayerId) return;
-
-	const player = players[playerInfo.id];
-	if (player && player.character) {
-		// Use the new methods on the Character class
-		player.character.setTargetPosition(playerInfo.x, 0, playerInfo.y); // Use Y from server as Z
-
-		if (playerInfo.rotation) {
-			player.character.setTargetRotation(
-				playerInfo.rotation.x,
-				playerInfo.rotation.y,
-				playerInfo.rotation.z,
-				playerInfo.rotation.w
-			);
-		}
-
-		if (playerInfo.animation) {
-			player.character.playAnimation(playerInfo.animation);
-		}
-	}
-}
-
-function removePlayer(id) {
-	const player = players[id];
-	if (player) {
-		if (player.character) {
-			scene.remove(player.character.model);
-		}
-		if (player.nameLabel) {
-			player.nameLabel.remove();
-		}
-		delete players[id];
-	}
-}
+// removePlayer function removed
 
 function addItem(itemInfo) {
     if (!resourceManager.canDisplayItem(itemInfo.type)) {
@@ -213,11 +126,9 @@ function findClosestItem(playerPosition) {
 export const ThreeScene = {
 	init,
 	animate,
-	addPlayer,
-	updatePlayerPosition,
-	removePlayer,
+    // addPlayer, updatePlayerPosition, removePlayer are removed
 	setLocalPlayerId,
-	players,
+	// players, // removed
 	addItem,
 	removeItem,
 	findClosestItem,

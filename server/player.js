@@ -28,7 +28,7 @@ function handleNewPlayer(io, socket, worldItems) {
 			id: socket.id, // The ephemeral socket ID
 			characterId: character.id,
 			userId: user.id,
-			name: user.username, // Use username from the users table
+			name: user.name, // Use name from the users table
 			x: character.x,
 			y: character.y,
 			z: character.z,

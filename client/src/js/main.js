@@ -2,20 +2,18 @@
 
 import * as THREE from "three";
 import { ThreeScene } from "./three-scene.js";
+import { PlayerManager } from "./player-manager.js"; // Import PlayerManager
 import { UserInput } from "./user-input.js";
 import { Auth } from "./auth.js";
 import { UI } from "./ui.js";
 import { CharacterSelection } from "./character-selection.js";
+
 // Game Logic (to be initialized after login)
 function initializeGame(token, character) {
 	// Show the game container
 	document.getElementById("game-container").style.display = "block";
 
 	// 1. Initialisation des modules
-	// Use character data directly, not localStorage
-	const characterModel = character.model || "male";
-	const characterColor = character.color || "#ff0000";
-
 	ThreeScene.init(document.getElementById("game-canvas"));
 	UserInput.init();
 
@@ -24,8 +22,6 @@ function initializeGame(token, character) {
 		auth: {
 			token,
 			characterId: character.id,
-			model: characterModel,
-			color: characterColor,
 		},
 	});
 	let myId = null;
@@ -36,7 +32,7 @@ function initializeGame(token, character) {
 
 	socket.on("connect", () => {
 		myId = socket.id;
-		ThreeScene.setLocalPlayerId(myId);
+		PlayerManager.setLocalPlayerId(myId); // Use PlayerManager
 		console.log("Connecté au serveur avec l-ID:", myId);
 	});
 
@@ -52,10 +48,7 @@ function initializeGame(token, character) {
 		for (let id in allPlayers) {
 			if (allPlayers.hasOwnProperty(id)) {
 				const playerInfo = allPlayers[id];
-				if (!playerInfo.model) {
-					playerInfo.model = localStorage.getItem("playerModel") || "male";
-				}
-				ThreeScene.addPlayer(playerInfo);
+				PlayerManager.addPlayer(playerInfo); // Use PlayerManager
 
 				// If this is the local player, update the inventory UI
 				if (id === myId) {
@@ -66,23 +59,20 @@ function initializeGame(token, character) {
 	});
 
 	socket.on("newPlayer", (playerInfo) => {
-		if (!playerInfo.model) {
-			playerInfo.model = localStorage.getItem("playerModel") || "male";
-		}
-		ThreeScene.addPlayer(playerInfo);
+		PlayerManager.addPlayer(playerInfo); // Use PlayerManager
 	});
 
 	socket.on("playerMoved", (playerInfo) => {
-		ThreeScene.updatePlayerPosition(playerInfo);
+		PlayerManager.updatePlayerPosition(playerInfo); // Use PlayerManager
 	});
 
 	socket.on("playerDisconnected", (id) => {
-		ThreeScene.removePlayer(id);
+		PlayerManager.removePlayer(id); // Use PlayerManager
 	});
 
 	socket.on("correction", (lastValidPosition) => {
 		const correctedPlayerInfo = { id: myId, ...lastValidPosition };
-		ThreeScene.updatePlayerPosition(correctedPlayerInfo);
+		PlayerManager.updatePlayerPosition(correctedPlayerInfo); // Use PlayerManager
 	});
 
 	let inventoryOpen = false;
@@ -108,7 +98,7 @@ function initializeGame(token, character) {
 	});
 
 	socket.on("inventoryUpdate", (inventory) => {
-		const player = ThreeScene.players[myId];
+        const player = PlayerManager.getLocalPlayer(); // Use PlayerManager
 		if (player) {
 			player.inventory = inventory;
 		}
@@ -136,11 +126,12 @@ function initializeGame(token, character) {
 
 	function gameLogic() {
         // This function sends the local player's state to the server.
-		if (!myId || !ThreeScene.players[myId] || !ThreeScene.players[myId].character) {
+        const localPlayer = PlayerManager.getLocalPlayer(); // Use PlayerManager
+		if (!myId || !localPlayer || !localPlayer.character) {
             return;
         }
 
-        const character = ThreeScene.players[myId].character;
+        const character = localPlayer.character;
         const currentPosition = character.model.position;
         const currentQuaternion = character.targetQuaternion;
         const currentAnimation = character.currentAction ? character.currentAction.getClip().name.toLowerCase() : "";
