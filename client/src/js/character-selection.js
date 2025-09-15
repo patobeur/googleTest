@@ -5,7 +5,7 @@ let onPlayCallback = null;
 let authToken = null;
 let selectedCharacter = null;
 
-let characterSelectionContainer, characterList, playButton, authContainer, gameContainer,
+let characterSelectionContainer, characterList, authContainer, gameContainer,
     quitButton, showCreationButton, creationForm, createButton, cancelButton,
     newCharacterNameInput, newCharacterClassInput, modelSelect, colorPicker;
 
@@ -15,7 +15,6 @@ function renderCharacters(characters) {
         // If no characters, show the creation form automatically
         showCreationButton.style.display = 'none'; // Hide the button
         creationForm.style.display = 'block';
-        playButton.disabled = true;
     } else {
         showCreationButton.style.display = 'inline-block';
         creationForm.style.display = 'none';
@@ -27,17 +26,37 @@ function renderCharacters(characters) {
         characterCard.dataset.characterId = character.id;
         characterCard.innerHTML = `
             <h3>${character.name}</h3>
-            <p>Class: ${character.class}</p>
-            <p>Level: ${character.level}</p>
+            <p>Classe: ${character.class}</p>
+            <p>Niveau: ${character.level}</p>
+            <p>Genre: ${character.gender}</p>
+            <p>Modèle: ${character.model.split('.')[0]}</p>
+            <div class="color-swatch-container">
+                <span>Couleur:</span>
+                <div class="color-swatch" style="background-color: ${character.color};"></div>
+            </div>
+            <button class="play-btn">Jouer</button>
         `;
-        characterCard.addEventListener("click", () => {
-            if (selectedCharacter) {
-                document.querySelector(".character-card.selected")?.classList.remove("selected");
+
+        const playBtn = characterCard.querySelector('.play-btn');
+        playBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card click event from firing
+            if (onPlayCallback) {
+                hide();
+                onPlayCallback(authToken, character);
             }
-            selectedCharacter = character;
-            characterCard.classList.add("selected");
-            playButton.disabled = false;
         });
+
+        characterCard.addEventListener("click", () => {
+            // Remove 'selected' from previously selected card
+            const currentlySelected = document.querySelector(".character-card.selected");
+            if (currentlySelected) {
+                currentlySelected.classList.remove("selected");
+            }
+            // Add 'selected' to the clicked card
+            characterCard.classList.add("selected");
+            selectedCharacter = character;
+        });
+
         characterList.appendChild(characterCard);
     });
 }
@@ -124,7 +143,6 @@ function show(token) {
     gameContainer.style.display = "none";
     characterSelectionContainer.style.display = "block";
     creationForm.style.display = 'none';
-    playButton.disabled = true;
     selectedCharacter = null;
 
     fetchCharacters();
@@ -143,7 +161,6 @@ function init(playCallback) {
     gameContainer = document.getElementById("game-container");
     characterSelectionContainer = document.getElementById("character-selection-container");
     characterList = document.getElementById("character-list");
-    playButton = document.getElementById("play-button");
     quitButton = document.getElementById("quit-button");
     showCreationButton = document.getElementById("show-character-creation-button");
     creationForm = document.getElementById("character-creation-form");
@@ -155,13 +172,6 @@ function init(playCallback) {
     colorPicker = document.getElementById("color-picker");
 
     // Event Listeners
-    playButton.addEventListener("click", () => {
-        if (selectedCharacter && onPlayCallback) {
-            hide();
-            onPlayCallback(authToken, selectedCharacter);
-        }
-    });
-
     quitButton.addEventListener("click", () => {
         logout(null);
     });
