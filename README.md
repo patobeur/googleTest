@@ -50,10 +50,27 @@ L'ambition à long terme est de transformer ce jeu en une plateforme où des ens
 3.  **Lancer le jeu :**
     *   Ouvrez simplement le fichier `client/index.html` dans votre navigateur web. Pas besoin de serveur web, tout est géré côté client.
 
-## Objectifs Futurs
+# ROADMAP
 
-*   **Système d'inventaire** et de collecte de ressources.
+## Objectifs Futurs phase 1
+
+ -[x] Pop et repop de ressources collectables.
+
+## Objectifs Futurs phase 2
+
+ -[x] **Système d'inventaire** et de collecte de ressources.
+
+ -[ ] Systeme de déplacement des items dans l'inventaire d'une case à une autre vide.
+
+ -[ ] Systeme pour déposer des items au sol.
+
+## Objectifs Futurs phase 3
+
+-[ ] Le personnage doit utiliser le model indiqué lors de sa creation.
+
+-[ ] le nom du personnage doit etre le nom donnée au personnage et non le mail du compte.
+
+## Objectifs Futurs phase inconnu
+
 *   **Interactions avec l'environnement** (PNJ, objets, quêtes).
-*   **Outils d'édition de monde** pour les enseignants.
-*   **Amélioration de la persistance** avec une base de données plus robuste (ex: MongoDB, PostgreSQL).
-*   **Déploiement en ligne** pour un accès facilité.
+*   **Interactions entre joueurs/euses** (PNJ, objets, quêtes).
