@@ -18,7 +18,6 @@ function initializeGame(token, character) {
 
 	ThreeScene.init(document.getElementById("game-canvas"));
 	UserInput.init();
-	UI.init();
 
 	// 2. Connexion et logique Socket.IO
 	const socket = io({
@@ -30,6 +29,9 @@ function initializeGame(token, character) {
 		},
 	});
 	let myId = null;
+
+	// Pass socket to UI module
+	UI.init(socket);
 
 	socket.on("connect", () => {
 		myId = socket.id;

@@ -318,6 +318,10 @@ body {
 	cursor: grabbing;
 }
 
+.inventory-item.dragging {
+	opacity: 0.4;
+}
+
 .inventory-tooltip {
 	position: absolute;
 	display: none;

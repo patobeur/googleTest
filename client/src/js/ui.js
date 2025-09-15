@@ -18,6 +18,7 @@ const inventorySlots = document.getElementById("inventory-slots");
 let onDropItem = null;
 let onMoveItem = null;
 let tooltipElement = null;
+let gameSocket = null;
 
 const itemDetails = {
 	wood: { name: "Bois", description: "Un morceau de bois de base." },
@@ -103,11 +104,27 @@ function updateInventory(inventory) {
 			// itemDiv.dataset.itemId = slotData.item.id;
 
 			itemDiv.addEventListener("dragstart", (e) => {
-				e.dataTransfer.setData(
-					"text/plain",
-					JSON.stringify({ fromIndex: i })
-				);
-				console.log({ fromIndex: i })
+				e.dataTransfer.setData("text/plain", JSON.stringify({ fromIndex: i }));
+
+				// --- Create a drag image ---
+				const dragImage = e.target.cloneNode(true);
+				dragImage.style.position = "absolute";
+				dragImage.style.top = "-1000px"; // Move it off-screen
+				dragImage.style.opacity = 0.7;
+				document.body.appendChild(dragImage);
+				e.dataTransfer.setDragImage(dragImage, 24, 24); // Center the image on the cursor
+
+				// Add a class to the original item to show it's being dragged
+				e.target.classList.add("dragging");
+
+				// Cleanup the drag image and class afterwards
+				const cleanup = () => {
+					document.body.removeChild(dragImage);
+					e.target.classList.remove("dragging");
+					// Remove the event listener itself
+					document.removeEventListener("dragend", cleanup);
+				};
+				document.addEventListener("dragend", cleanup, { once: true });
 			});
 
 			// Tooltip events
@@ -174,7 +191,8 @@ function applyTheme(theme) {
 	}
 }
 
-function init() {
+function init(socket) {
+	gameSocket = socket;
 	// Create tooltip element
 	tooltipElement = document.createElement("div");
 	tooltipElement.className = "inventory-tooltip";
@@ -238,6 +256,9 @@ function init() {
 		e.preventDefault();
 		const token = localStorage.getItem("token");
 		if (token) {
+			if (gameSocket) {
+				gameSocket.disconnect();
+			}
 			document.getElementById("game-container").style.display = "none";
 			CharacterSelection.show(token);
 		} else {

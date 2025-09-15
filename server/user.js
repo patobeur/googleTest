@@ -12,11 +12,11 @@ function getUserByEmail(email, callback) {
     db.get(sql, [email], callback);
 }
 
-function createUser(email, password, callback) {
+function createUser(email, password, name, callback) {
     bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
         if (err) { return callback(err); }
-        const sql = `INSERT INTO users (username, password) VALUES (?, ?)`;
-        db.run(sql, [email, hashedPassword], function(err) {
+        const sql = `INSERT INTO users (username, password, name) VALUES (?, ?, ?)`;
+        db.run(sql, [email, hashedPassword, name], function(err) {
             if (err) { return callback(err); }
             callback(null, { id: this.lastID });
         });
