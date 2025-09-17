@@ -1,113 +1,122 @@
-const User = require('./user');
+const Player = require('./entities/player');
 const Character = require('./character');
 const Inventory = require('./inventory.model');
-const { registerInventoryHandlers } = require("./inventory");
+const world = require('./world');
 
 const players = {}; // In-memory store for active players
 
-function handleNewPlayer(io, socket, worldItems) {
-	console.log(`Player connecting with userId: ${socket.userId} and characterId: ${socket.characterId}`);
+function onPlayerConnected(socket, worldItems) {
+    console.log(`Player connecting with userId: ${socket.userId} and characterId: ${socket.characterId}`);
 
-	// Fetch user, character, and inventory data in parallel
-	Promise.all([
-		new Promise((resolve, reject) => User.getUserById(socket.userId, (err, user) => err ? reject(err) : resolve(user))),
-		new Promise((resolve, reject) => Character.getCharacterById(socket.characterId, (err, character) => err ? reject(err) : resolve(character))),
-		new Promise((resolve, reject) => Inventory.getInventory(socket.characterId, (err, inventory) => err ? reject(err) : resolve(inventory)))
-	]).then(([user, character, inventory]) => {
-		if (!user || !character) {
-			throw new Error(`User or Character not found. User: ${!!user}, Character: ${!!character}`);
-		}
+    // Fetch character and inventory data in parallel
+    Promise.all([
+        new Promise((resolve, reject) => Character.getCharacterById(socket.characterId, (err, character) => err ? reject(err) : resolve(character))),
+        new Promise((resolve, reject) => Inventory.getInventory(socket.characterId, (err, inventory) => err ? reject(err) : resolve(inventory)))
+    ]).then(([character, inventory]) => {
+        if (!character) {
+            throw new Error(`Character not found.`);
+        }
 
-		// Security check: ensure the character belongs to the user
-		if (character.user_id !== user.id) {
-			throw new Error(`Character ${character.id} does not belong to user ${user.id}`);
-		}
+        // Security check: ensure the character belongs to the user
+        if (character.user_id !== socket.userId) {
+            throw new Error(`Character ${character.id} does not belong to user ${socket.userId}`);
+        }
 
-		// Create the in-game player object from the character data
-		const player = {
-			id: socket.id, // The ephemeral socket ID
-			characterId: character.id,
-			userId: user.id,
-			name: user.name, // Use name from the users table
-			x: character.x,
-			y: character.y,
-			z: character.z,
-			rotation: { x: 0, y: 0, z: 0, w: 1 },
-			animation: "idle",
-			inventory: inventory, // Load inventory from DB
-			level: character.level,
-			health: character.health,
-			mana: character.mana,
-			model: character.model,
-			gender: character.gender,
-			color: character.color,
-		};
+        const player = new Player(socket, { ...character, inventory });
+        players[socket.id] = player;
 
-		players[socket.id] = player;
+        const allPlayersState = Object.values(players).map(p => p.getState());
+        socket.emit("currentState", allPlayersState);
+        socket.emit("worldItems", worldItems);
+        socket.broadcast.emit("newPlayer", player.getState());
 
-		socket.emit("currentState", players);
-		socket.emit("worldItems", worldItems);
-		socket.broadcast.emit("newPlayer", player);
-
-	}).catch(err => {
-		console.error("Error during player initialization:", err);
-		socket.disconnect(true); // Disconnect client if data can't be loaded
-	});
+    }).catch(err => {
+        console.error("Error during player initialization:", err);
+        socket.disconnect(true); // Disconnect client if data can't be loaded
+    });
 }
 
-function handlePlayerDisconnection(io, socket) {
-	console.log("Player disconnected:", socket.id);
-	const player = players[socket.id];
-	if (player) {
-		// Save the player's state back to the database
-		const characterDataToSave = {
-			id: player.characterId,
-			level: player.level,
-			health: player.health,
-			mana: player.mana,
-			x: player.x,
-			y: player.y,
-			z: player.z,
-		};
-		Character.updateCharacterState(characterDataToSave, (err) => {
-			if (err) {
-				console.error(`Failed to save state for character ${player.characterId}:`, err);
-			} else {
-				console.log(`Successfully saved state for character ${player.characterId}.`);
-			}
-		});
-		delete players[socket.id];
-	}
-	io.emit("playerDisconnected", socket.id);
+function onPlayerDisconnected(socket) {
+    console.log("Player disconnected:", socket.id);
+    const player = players[socket.id];
+    if (player) {
+        // Save the player's state back to the database
+        const characterDataToSave = {
+            id: player.characterId,
+            x: player.x,
+            y: player.y,
+        };
+        Character.updateCharacterState(characterDataToSave, (err) => {
+            if (err) {
+                console.error(`Failed to save state for character ${player.characterId}:`, err);
+            } else {
+                console.log(`Successfully saved state for character ${player.characterId}.`);
+            }
+        });
+        Inventory.saveInventory(player.characterId, player.inventory, (err) => {
+            if (err) {
+                console.error(`Failed to save inventory for character ${player.characterId}:`, err);
+            } else {
+                console.log(`Successfully saved inventory for character ${player.characterId}.`);
+            }
+        });
+        delete players[socket.id];
+    }
+    socket.broadcast.emit("playerDisconnected", socket.id);
 }
 
-function handlePlayerMovement(io, socket, movementData) {
-	const player = players[socket.id];
-	if (!player) return;
+function onPlayerMovement(socket, movementData) {
+    const player = players[socket.id];
+    if (!player) return;
 
-	// Basic anti-cheat/validation can be done here
-	player.x = movementData.x;
-	player.y = movementData.y; // In our 3D world, the server's 'y' is the client's 'z'
-	player.rotation = movementData.rotation;
-	player.animation = movementData.animation;
+    player.move(movementData);
 
-	// We don't save position on every move, only on disconnect, but broadcast to others
-	io.emit("playerMoved", player);
+    // Broadcast updated state to other players
+    socket.broadcast.emit("playerMoved", player.getState());
 }
 
-function init(io, worldItems) {
-	io.on("connection", (socket) => {
-		handleNewPlayer(io, socket, worldItems);
+function onPickupItem(socket, itemId) {
+    const player = players[socket.id];
+    if (!player) return;
 
-		socket.on("disconnect", () => handlePlayerDisconnection(io, socket));
+    const item = world.getItem(itemId);
+    if (!item) return;
 
-		socket.on("playerMovement", (movementData) =>
-			handlePlayerMovement(io, socket, movementData)
-		);
+    const emptySlot = player.inventory.findIndex(slot => slot === null);
+    if (emptySlot !== -1) {
+        player.pickupItem(item, emptySlot);
+        world.removeItem(itemId);
 
-		// Register inventory handlers for the connected socket
-		registerInventoryHandlers(io, socket, players, worldItems);
-	});
+        socket.emit('inventoryUpdate', player.inventory);
+        socket.broadcast.emit('itemPickedUp', itemId);
+        socket.emit('itemPickedUp', itemId);
+    }
 }
 
-module.exports = { init };
+function onDropItem(socket, slotIndex) {
+    const player = players[socket.id];
+    if (!player) return;
+
+    const item = player.dropItem(slotIndex);
+    if(item){
+        world.spawnItem(item.name, { x: player.x, y: player.y });
+        socket.emit('inventoryUpdate', player.inventory);
+    }
+}
+
+function onMoveItem(socket, { fromIndex, toIndex }) {
+    const player = players[socket.id];
+    if (!player) return;
+
+    player.moveItem(fromIndex, toIndex);
+    socket.emit('inventoryUpdate', player.inventory);
+}
+
+module.exports = {
+    onPlayerConnected,
+    onPlayerDisconnected,
+    onPlayerMovement,
+    onPickupItem,
+    onDropItem,
+    onMoveItem
+};

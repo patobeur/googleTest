@@ -2,11 +2,12 @@
 
 import * as THREE from "three";
 import { ThreeScene } from "./three-scene.js";
-import { PlayerManager } from "./player-manager.js"; // Import PlayerManager
+import { PlayerManager } from "./player-manager.js";
 import { UserInput } from "./user-input.js";
 import { Auth } from "./auth.js";
 import { UI } from "./ui.js";
 import { CharacterSelection } from "./character-selection.js";
+import { SocketManager } from "./socket-manager.js";
 
 // Game Logic (to be initialized after login)
 function initializeGame(token, character) {
@@ -16,64 +17,12 @@ function initializeGame(token, character) {
 	// 1. Initialisation des modules
 	ThreeScene.init(document.getElementById("game-canvas"));
 	UserInput.init();
-
-	// 2. Connexion et logique Socket.IO
-	const socket = io({
-		auth: {
-			token,
-			characterId: character.id,
-		},
-	});
-	let myId = null;
+	SocketManager.initSocket(token, character);
 
 	// Pass socket to UI module and initialize inventory
+	const socket = SocketManager.getSocket();
 	UI.init(socket);
 	UI.updateInventory(character.inventory);
-
-	socket.on("connect", () => {
-		myId = socket.id;
-		PlayerManager.setLocalPlayerId(myId); // Use PlayerManager
-		console.log("Connecté au serveur avec l-ID:", myId);
-	});
-
-	socket.on("connect_error", (err) => {
-		if (err.message === "Authentication error") {
-			console.error("Authentication failed, please log in again.");
-			localStorage.removeItem("token");
-			window.location.reload();
-		}
-	});
-
-	socket.on("currentState", (allPlayers) => {
-		for (let id in allPlayers) {
-			if (allPlayers.hasOwnProperty(id)) {
-				const playerInfo = allPlayers[id];
-				PlayerManager.addPlayer(playerInfo); // Use PlayerManager
-
-				// If this is the local player, update the inventory UI
-				if (id === myId) {
-					UI.updateInventory(playerInfo.inventory);
-				}
-			}
-		}
-	});
-
-	socket.on("newPlayer", (playerInfo) => {
-		PlayerManager.addPlayer(playerInfo); // Use PlayerManager
-	});
-
-	socket.on("playerMoved", (playerInfo) => {
-		PlayerManager.updatePlayerPosition(playerInfo); // Use PlayerManager
-	});
-
-	socket.on("playerDisconnected", (id) => {
-		PlayerManager.removePlayer(id); // Use PlayerManager
-	});
-
-	socket.on("correction", (lastValidPosition) => {
-		const correctedPlayerInfo = { id: myId, ...lastValidPosition };
-		PlayerManager.updatePlayerPosition(correctedPlayerInfo); // Use PlayerManager
-	});
 
 	let inventoryOpen = false;
 	function toggleInventory() {
@@ -84,26 +33,6 @@ function initializeGame(token, character) {
 			UI.closeInventory();
 		}
 	}
-
-	socket.on("worldItems", (items) => {
-		items.forEach((item) => ThreeScene.addItem(item));
-	});
-
-	socket.on("itemSpawned", (item) => {
-		ThreeScene.addItem(item);
-	});
-
-	socket.on("itemPickedUp", (itemId) => {
-		ThreeScene.removeItem(itemId);
-	});
-
-	socket.on("inventoryUpdate", (inventory) => {
-        const player = PlayerManager.getLocalPlayer(); // Use PlayerManager
-		if (player) {
-			player.inventory = inventory;
-		}
-		UI.updateInventory(inventory);
-	});
 
 	UI.setOnDropItem((slotIndex) => {
 		socket.emit("dropItem", slotIndex);
@@ -126,8 +55,8 @@ function initializeGame(token, character) {
 
 	function gameLogic() {
         // This function sends the local player's state to the server.
-        const localPlayer = PlayerManager.getLocalPlayer(); // Use PlayerManager
-		if (!myId || !localPlayer || !localPlayer.character) {
+        const localPlayer = PlayerManager.getLocalPlayer();
+		if (!localPlayer || !localPlayer.character) {
             return;
         }
 
