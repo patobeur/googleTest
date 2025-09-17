@@ -28,11 +28,14 @@ function initSocket(token, character) {
     });
 
     socket.on("currentState", (allPlayers) => {
-        for (const playerInfo of allPlayers) {
-            PlayerManager.addPlayer(playerInfo);
+        for (const id in allPlayers) {
+            if (allPlayers.hasOwnProperty(id)) {
+                const playerInfo = allPlayers[id];
+                PlayerManager.addPlayer(playerInfo);
 
-            if (playerInfo.id === PlayerManager.getLocalPlayerId()) {
-                UI.updateInventory(playerInfo.inventory);
+                if (id === PlayerManager.getLocalPlayerId()) {
+                    UI.updateInventory(playerInfo.inventory);
+                }
             }
         }
     });

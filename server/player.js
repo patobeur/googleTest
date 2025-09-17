@@ -25,7 +25,10 @@ function onPlayerConnected(socket, worldItems) {
         const player = new Player(socket, { ...character, inventory });
         players[socket.id] = player;
 
-        const allPlayersState = Object.values(players).map(p => p.getState());
+        const allPlayersState = {};
+        for (const playerId in players) {
+            allPlayersState[playerId] = players[playerId].getState();
+        }
         socket.emit("currentState", allPlayersState);
         socket.emit("worldItems", worldItems);
         socket.broadcast.emit("newPlayer", player.getState());
