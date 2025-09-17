@@ -13,8 +13,8 @@ function onPlayerMovement(socket, movementData) {
     player.onPlayerMovement(socket, movementData);
 }
 
-function onPickupItem(socket, itemId) {
-    player.onPickupItem(socket, itemId);
+function onPickupItem(io, socket, itemId) {
+    player.onPickupItem(io, socket, itemId);
 }
 
 function onDropItem(socket, slotIndex) {

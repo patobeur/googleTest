@@ -39,7 +39,7 @@ function initSocketEvents(io) {
     });
 
     socket.on('pickupItem', (itemId) => {
-        game.onPickupItem(socket, itemId);
+        game.onPickupItem(io, socket, itemId);
     });
 
     socket.on('dropItem', (slotIndex) => {

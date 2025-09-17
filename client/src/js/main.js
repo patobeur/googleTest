@@ -22,7 +22,6 @@ function initializeGame(token, character) {
 	// Pass socket to UI module and initialize inventory
 	const socket = SocketManager.getSocket();
 	UI.init(socket);
-	UI.updateInventory(character.inventory);
 
 	let inventoryOpen = false;
 	function toggleInventory() {

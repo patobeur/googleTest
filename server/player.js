@@ -93,7 +93,7 @@ function saveAndSyncInventory(socket, player) {
     });
 }
 
-function onPickupItem(socket, itemId) {
+function onPickupItem(io, socket, itemId) {
     const player = players[socket.id];
     if (!player) return;
 
@@ -117,8 +117,7 @@ function onPickupItem(socket, itemId) {
             slot.quantity++;
             const pickedUpItemType = world.worldItems[itemIndexInWorld].type;
             world.worldItems.splice(itemIndexInWorld, 1);
-            socket.broadcast.emit("itemPickedUp", itemId);
-            socket.emit("itemPickedUp", itemId);
+            io.emit("itemPickedUp", itemId);
             respawnItem(pickedUpItemType);
             saveAndSyncInventory(socket, player);
             return;
@@ -131,8 +130,7 @@ function onPickupItem(socket, itemId) {
         player.inventory[emptySlotIndex] = { type: item.type, quantity: 1 };
         const pickedUpItemType = world.worldItems[itemIndexInWorld].type;
         world.worldItems.splice(itemIndexInWorld, 1);
-        socket.broadcast.emit("itemPickedUp", itemId);
-        socket.emit("itemPickedUp", itemId);
+        io.emit("itemPickedUp", itemId);
         respawnItem(pickedUpItemType);
         saveAndSyncInventory(socket, player);
         return;
