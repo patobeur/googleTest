@@ -83,13 +83,15 @@ function onPickupItem(socket, itemId) {
     const player = players[socket.id];
     if (!player) return;
 
-    const item = world.getItem(itemId);
-    if (!item) return;
+    const itemIndex = world.worldItems.findIndex(item => item.id === itemId);
+    if (itemIndex === -1) return;
+
+    const item = world.worldItems[itemIndex];
 
     const emptySlot = player.inventory.findIndex(slot => slot === null);
     if (emptySlot !== -1) {
         player.pickupItem(item, emptySlot);
-        world.removeItem(itemId);
+        world.worldItems.splice(itemIndex, 1);
 
         socket.emit('inventoryUpdate', player.inventory);
         socket.broadcast.emit('itemPickedUp', itemId);
@@ -103,7 +105,7 @@ function onDropItem(socket, slotIndex) {
 
     const item = player.dropItem(slotIndex);
     if(item){
-        world.spawnItem(item.name, { x: player.x, y: player.y });
+        world.addItemToWorld(item, { x: player.x, y: player.y, z: player.z });
         socket.emit('inventoryUpdate', player.inventory);
     }
 }
