@@ -11,9 +11,13 @@ class Player {
         this.color = characterData.color;
         this.x = characterData.x || 0;
         this.y = characterData.y || 0;
+        this.z = characterData.z || 0;
         this.rotation = characterData.rotation || { x: 0, y: 0, z: 0, w: 1 };
         this.animation = 'idle';
         this.inventory = characterData.inventory || Array(20).fill(null);
+        this.level = characterData.level || 1;
+        this.health = characterData.health || 100;
+        this.mana = characterData.mana || 100;
         this.lastUpdateTime = Date.now();
     }
 
@@ -49,9 +53,13 @@ class Player {
             color: this.color,
             x: this.x,
             y: this.y,
+            z: this.z,
             rotation: this.rotation,
             animation: this.animation,
             inventory: this.inventory,
+            level: this.level,
+            health: this.health,
+            mana: this.mana,
         };
     }
 }

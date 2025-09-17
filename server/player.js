@@ -45,6 +45,10 @@ function onPlayerDisconnected(socket) {
             id: player.characterId,
             x: player.x,
             y: player.y,
+            z: player.z,
+            level: player.level,
+            health: player.health,
+            mana: player.mana,
         };
         Character.updateCharacterState(characterDataToSave, (err) => {
             if (err) {
