@@ -29,22 +29,6 @@ class Player {
         this.lastUpdateTime = Date.now();
     }
 
-    pickupItem(item, slotIndex) {
-        this.inventory[slotIndex] = item;
-    }
-
-    dropItem(slotIndex) {
-        const item = this.inventory[slotIndex];
-        this.inventory[slotIndex] = null;
-        return item;
-    }
-
-    moveItem(fromIndex, toIndex) {
-        const item = this.inventory[fromIndex];
-        this.inventory[fromIndex] = this.inventory[toIndex];
-        this.inventory[toIndex] = item;
-    }
-
     getState() {
         return {
             id: this.id,

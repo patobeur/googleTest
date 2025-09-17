@@ -79,43 +79,113 @@ function onPlayerMovement(socket, movementData) {
     socket.broadcast.emit("playerMoved", player.getState());
 }
 
+const { respawnItem } = require("./world");
+const MAX_STACK_SIZE = 64;
+
+function saveAndSyncInventory(socket, player) {
+    Inventory.saveInventory(player.characterId, player.inventory, (err) => {
+        if (err) {
+            console.error(`Failed to save inventory for character ${player.characterId}:`, err);
+            socket.emit("infoMessage", "Error: Could not save inventory.");
+            return;
+        }
+        socket.emit("inventoryUpdate", player.inventory);
+    });
+}
+
 function onPickupItem(socket, itemId) {
     const player = players[socket.id];
     if (!player) return;
 
-    const itemIndex = world.worldItems.findIndex(item => item.id === itemId);
-    if (itemIndex === -1) return;
+    const itemIndexInWorld = world.worldItems.findIndex((item) => item.id === itemId);
+    if (itemIndexInWorld === -1) return;
 
-    const item = world.worldItems[itemIndex];
+    const item = world.worldItems[itemIndexInWorld];
+    const distance = Math.sqrt(
+        Math.pow(player.x - item.x, 2) + Math.pow(player.y - item.z, 2)
+    );
 
-    const emptySlot = player.inventory.findIndex(slot => slot === null);
-    if (emptySlot !== -1) {
-        player.pickupItem(item, emptySlot);
-        world.worldItems.splice(itemIndex, 1);
-
-        socket.emit('inventoryUpdate', player.inventory);
-        socket.broadcast.emit('itemPickedUp', itemId);
-        socket.emit('itemPickedUp', itemId);
+    if (distance > 2) {
+        socket.emit("infoMessage", "Too far away to pick up.");
+        return;
     }
+
+    // 1. Try to stack with existing items
+    for (let i = 0; i < player.inventory.length; i++) {
+        const slot = player.inventory[i];
+        if (slot && slot.type === item.type && slot.quantity < MAX_STACK_SIZE) {
+            slot.quantity++;
+            const pickedUpItemType = world.worldItems[itemIndexInWorld].type;
+            world.worldItems.splice(itemIndexInWorld, 1);
+            socket.broadcast.emit("itemPickedUp", itemId);
+            socket.emit("itemPickedUp", itemId);
+            respawnItem(pickedUpItemType);
+            saveAndSyncInventory(socket, player);
+            return;
+        }
+    }
+
+    // 2. Find an empty slot
+    const emptySlotIndex = player.inventory.findIndex((slot) => slot === null);
+    if (emptySlotIndex !== -1) {
+        player.inventory[emptySlotIndex] = { type: item.type, quantity: 1 };
+        const pickedUpItemType = world.worldItems[itemIndexInWorld].type;
+        world.worldItems.splice(itemIndexInWorld, 1);
+        socket.broadcast.emit("itemPickedUp", itemId);
+        socket.emit("itemPickedUp", itemId);
+        respawnItem(pickedUpItemType);
+        saveAndSyncInventory(socket, player);
+        return;
+    }
+
+    socket.emit("infoMessage", "L'inventaire est plein.");
 }
 
 function onDropItem(socket, slotIndex) {
     const player = players[socket.id];
-    if (!player) return;
+    if (!player || slotIndex < 0 || slotIndex >= player.inventory.length) return;
 
-    const item = player.dropItem(slotIndex);
-    if(item){
-        world.addItemToWorld(item, { x: player.x, y: player.y, z: player.z });
-        socket.emit('inventoryUpdate', player.inventory);
+    const slot = player.inventory[slotIndex];
+    if (!slot) return;
+
+    world.addItemToWorld(slot, { x: player.x, y: player.y, z: player.z });
+
+    slot.quantity--;
+    if (slot.quantity <= 0) {
+        player.inventory[slotIndex] = null;
     }
+
+    saveAndSyncInventory(socket, player);
 }
 
 function onMoveItem(socket, { fromIndex, toIndex }) {
     const player = players[socket.id];
-    if (!player) return;
+    if (!player || fromIndex < 0 || fromIndex >= player.inventory.length || toIndex < 0 || toIndex >= player.inventory.length || fromIndex === toIndex) {
+        return;
+    }
 
-    player.moveItem(fromIndex, toIndex);
-    socket.emit('inventoryUpdate', player.inventory);
+    const fromSlot = player.inventory[fromIndex];
+    const toSlot = player.inventory[toIndex];
+
+    if (!fromSlot) return;
+
+    if (toSlot === null) {
+        player.inventory[toIndex] = fromSlot;
+        player.inventory[fromIndex] = null;
+    } else if (toSlot.type === fromSlot.type && toSlot.quantity < MAX_STACK_SIZE) {
+        const canAdd = MAX_STACK_SIZE - toSlot.quantity;
+        const amountToMove = Math.min(fromSlot.quantity, canAdd);
+        toSlot.quantity += amountToMove;
+        fromSlot.quantity -= amountToMove;
+        if (fromSlot.quantity <= 0) {
+            player.inventory[fromIndex] = null;
+        }
+    } else {
+        player.inventory[toIndex] = fromSlot;
+        player.inventory[fromIndex] = toSlot;
+    }
+
+    saveAndSyncInventory(socket, player);
 }
 
 module.exports = {
