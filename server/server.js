@@ -16,11 +16,14 @@ const socketIO = require("socket.io");
 const bodyParser = require("body-parser");
 const jwt = require('jsonwebtoken');
 const { initSocketEvents } = require("./socket-events.js");
+const world = require("./world.js");
 require("./db.js"); // This will run the db serialization logic
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+
+world.init(io);
 
 const PORT = process.env.PORT || 3000;
 
