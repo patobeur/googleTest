@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { getCharactersByUserId, createCharacter } = require("../character");
+const { getCharactersByUserId, createCharacter, getCharactersWithInventory } = require("../character");
 const path = require("path");
 const fs = require('fs');
 
@@ -71,6 +71,19 @@ router.get("/character-models", authenticateJWT, (req, res) => {
 
         const glbFiles = files.filter(file => path.extname(file).toLowerCase() === '.glb');
         res.json(glbFiles);
+    });
+});
+
+// Récupérer les personnages de l'utilisateur authentifié avec les détails de l'inventaire
+router.get("/characters/detailed", authenticateJWT, (req, res) => {
+    const userId = req.user.userId;
+    getCharactersWithInventory(userId, (err, characters) => {
+        if (err) {
+            return res
+                .status(500)
+                .json({ message: "Erreur du serveur lors de la récupération des personnages." });
+        }
+        res.json(characters);
     });
 });
 

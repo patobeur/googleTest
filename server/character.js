@@ -47,9 +47,53 @@ function updateCharacterState(characterData, callback) {
     db.run(sql, [level, health, mana, x, y, z, id], callback);
 }
 
+/**
+ * Récupère tous les personnages d'un utilisateur avec leur inventaire (limité à 20 objets).
+ * @param {number} userId - L'ID de l'utilisateur.
+ * @param {function(Error, Array)} callback - Le callback qui gère la réponse.
+ */
+function getCharactersWithInventory(userId, callback) {
+    const sql = `
+        SELECT
+            c.*,
+            (
+                SELECT GROUP_CONCAT(i.item_type || ':' || i.quantity, ';')
+                FROM (
+                    SELECT item_type, quantity
+                    FROM inventory
+                    WHERE character_id = c.id
+                    ORDER BY slot_index
+                    LIMIT 20
+                ) i
+            ) as inventory
+        FROM characters c
+        WHERE c.user_id = ?
+    `;
+    db.all(sql, [userId], (err, rows) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des personnages avec inventaire:", err.message);
+            return callback(err);
+        }
+        // Parser la chaîne d'inventaire en un tableau d'objets
+        rows.forEach(row => {
+            if (row.inventory) {
+                row.inventory = row.inventory.split(';').map(item => {
+                    const [item_type, quantity] = item.split(':');
+                    return { item_type, quantity: parseInt(quantity, 10) };
+                });
+            } else {
+                row.inventory = [];
+            }
+        });
+        callback(null, rows);
+    });
+}
+
+
 module.exports = {
     getCharactersByUserId,
     createCharacter,
     getCharacterById,
     updateCharacterState,
+    getCharactersWithInventory,
 };
