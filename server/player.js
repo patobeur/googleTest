@@ -1,113 +1,199 @@
-const User = require('./user');
+const Player = require('./entities/player');
 const Character = require('./character');
 const Inventory = require('./inventory.model');
-const { registerInventoryHandlers } = require("./inventory");
+const world = require('./world');
 
 const players = {}; // In-memory store for active players
 
-function handleNewPlayer(io, socket, worldItems) {
-	console.log(`Player connecting with userId: ${socket.userId} and characterId: ${socket.characterId}`);
+function onPlayerConnected(socket, worldItems) {
+    console.log(`Player connecting with userId: ${socket.userId} and characterId: ${socket.characterId}`);
 
-	// Fetch user, character, and inventory data in parallel
-	Promise.all([
-		new Promise((resolve, reject) => User.getUserById(socket.userId, (err, user) => err ? reject(err) : resolve(user))),
-		new Promise((resolve, reject) => Character.getCharacterById(socket.characterId, (err, character) => err ? reject(err) : resolve(character))),
-		new Promise((resolve, reject) => Inventory.getInventory(socket.characterId, (err, inventory) => err ? reject(err) : resolve(inventory)))
-	]).then(([user, character, inventory]) => {
-		if (!user || !character) {
-			throw new Error(`User or Character not found. User: ${!!user}, Character: ${!!character}`);
-		}
+    // Fetch character and inventory data in parallel
+    Promise.all([
+        new Promise((resolve, reject) => Character.getCharacterById(socket.characterId, (err, character) => err ? reject(err) : resolve(character))),
+        new Promise((resolve, reject) => Inventory.getInventory(socket.characterId, (err, inventory) => err ? reject(err) : resolve(inventory)))
+    ]).then(([character, inventory]) => {
+        if (!character) {
+            throw new Error(`Character not found.`);
+        }
 
-		// Security check: ensure the character belongs to the user
-		if (character.user_id !== user.id) {
-			throw new Error(`Character ${character.id} does not belong to user ${user.id}`);
-		}
+        // Security check: ensure the character belongs to the user
+        if (character.user_id !== socket.userId) {
+            throw new Error(`Character ${character.id} does not belong to user ${socket.userId}`);
+        }
 
-		// Create the in-game player object from the character data
-		const player = {
-			id: socket.id, // The ephemeral socket ID
-			characterId: character.id,
-			userId: user.id,
-			name: user.name, // Use name from the users table
-			x: character.x,
-			y: character.y,
-			z: character.z,
-			rotation: { x: 0, y: 0, z: 0, w: 1 },
-			animation: "idle",
-			inventory: inventory, // Load inventory from DB
-			level: character.level,
-			health: character.health,
-			mana: character.mana,
-			model: character.model,
-			gender: character.gender,
-			color: character.color,
-		};
+        const player = new Player(socket, { ...character, inventory });
+        players[socket.id] = player;
 
-		players[socket.id] = player;
+        const allPlayersState = {};
+        for (const playerId in players) {
+            allPlayersState[playerId] = players[playerId].getState();
+        }
+        socket.emit("currentState", allPlayersState);
+        socket.emit("worldItems", worldItems);
+        socket.broadcast.emit("newPlayer", player.getState());
 
-		socket.emit("currentState", players);
-		socket.emit("worldItems", worldItems);
-		socket.broadcast.emit("newPlayer", player);
-
-	}).catch(err => {
-		console.error("Error during player initialization:", err);
-		socket.disconnect(true); // Disconnect client if data can't be loaded
-	});
+    }).catch(err => {
+        console.error("Error during player initialization:", err);
+        socket.disconnect(true); // Disconnect client if data can't be loaded
+    });
 }
 
-function handlePlayerDisconnection(io, socket) {
-	console.log("Player disconnected:", socket.id);
-	const player = players[socket.id];
-	if (player) {
-		// Save the player's state back to the database
-		const characterDataToSave = {
-			id: player.characterId,
-			level: player.level,
-			health: player.health,
-			mana: player.mana,
-			x: player.x,
-			y: player.y,
-			z: player.z,
-		};
-		Character.updateCharacterState(characterDataToSave, (err) => {
-			if (err) {
-				console.error(`Failed to save state for character ${player.characterId}:`, err);
-			} else {
-				console.log(`Successfully saved state for character ${player.characterId}.`);
-			}
-		});
-		delete players[socket.id];
-	}
-	io.emit("playerDisconnected", socket.id);
+function onPlayerDisconnected(socket) {
+    console.log("Player disconnected:", socket.id);
+    const player = players[socket.id];
+    if (player) {
+        // Save the player's state back to the database
+        const characterDataToSave = {
+            id: player.characterId,
+            x: player.x,
+            y: player.y,
+            z: player.z,
+            level: player.level,
+            health: player.health,
+            mana: player.mana,
+        };
+        Character.updateCharacterState(characterDataToSave, (err) => {
+            if (err) {
+                console.error(`Failed to save state for character ${player.characterId}:`, err);
+            } else {
+                console.log(`Successfully saved state for character ${player.characterId}.`);
+            }
+        });
+        Inventory.saveInventory(player.characterId, player.inventory, (err) => {
+            if (err) {
+                console.error(`Failed to save inventory for character ${player.characterId}:`, err);
+            } else {
+                console.log(`Successfully saved inventory for character ${player.characterId}.`);
+            }
+        });
+        delete players[socket.id];
+    }
+    socket.broadcast.emit("playerDisconnected", socket.id);
 }
 
-function handlePlayerMovement(io, socket, movementData) {
-	const player = players[socket.id];
-	if (!player) return;
+function onPlayerMovement(socket, movementData) {
+    const player = players[socket.id];
+    if (!player) return;
 
-	// Basic anti-cheat/validation can be done here
-	player.x = movementData.x;
-	player.y = movementData.y; // In our 3D world, the server's 'y' is the client's 'z'
-	player.rotation = movementData.rotation;
-	player.animation = movementData.animation;
+    player.move(movementData);
 
-	// We don't save position on every move, only on disconnect, but broadcast to others
-	io.emit("playerMoved", player);
+    // Broadcast updated state to other players
+    socket.broadcast.emit("playerMoved", player.getState());
 }
 
-function init(io, worldItems) {
-	io.on("connection", (socket) => {
-		handleNewPlayer(io, socket, worldItems);
+const { respawnItem } = require("./world");
+const MAX_STACK_SIZE = 64;
 
-		socket.on("disconnect", () => handlePlayerDisconnection(io, socket));
-
-		socket.on("playerMovement", (movementData) =>
-			handlePlayerMovement(io, socket, movementData)
-		);
-
-		// Register inventory handlers for the connected socket
-		registerInventoryHandlers(io, socket, players, worldItems);
-	});
+function saveAndSyncInventory(socket, player) {
+    Inventory.saveInventory(player.characterId, player.inventory, (err) => {
+        if (err) {
+            console.error(`Failed to save inventory for character ${player.characterId}:`, err);
+            socket.emit("infoMessage", "Error: Could not save inventory.");
+            return;
+        }
+        socket.emit("inventoryUpdate", player.inventory);
+    });
 }
 
-module.exports = { init };
+function onPickupItem(io, socket, itemId) {
+    const player = players[socket.id];
+    if (!player) return;
+
+    const itemIndexInWorld = world.worldItems.findIndex((item) => item.id === itemId);
+    if (itemIndexInWorld === -1) return;
+
+    const item = world.worldItems[itemIndexInWorld];
+    const distance = Math.sqrt(
+        Math.pow(player.x - item.x, 2) + Math.pow(player.y - item.z, 2)
+    );
+
+    if (distance > 2) {
+        socket.emit("infoMessage", "Too far away to pick up.");
+        return;
+    }
+
+    // 1. Try to stack with existing items
+    for (let i = 0; i < player.inventory.length; i++) {
+        const slot = player.inventory[i];
+        if (slot && slot.type === item.type && slot.quantity < MAX_STACK_SIZE) {
+            slot.quantity++;
+            const pickedUpItemType = world.worldItems[itemIndexInWorld].type;
+            world.worldItems.splice(itemIndexInWorld, 1);
+            io.emit("itemPickedUp", itemId);
+            respawnItem(pickedUpItemType);
+            saveAndSyncInventory(socket, player);
+            return;
+        }
+    }
+
+    // 2. Find an empty slot
+    const emptySlotIndex = player.inventory.findIndex((slot) => slot === null);
+    if (emptySlotIndex !== -1) {
+        player.inventory[emptySlotIndex] = { type: item.type, quantity: 1 };
+        const pickedUpItemType = world.worldItems[itemIndexInWorld].type;
+        world.worldItems.splice(itemIndexInWorld, 1);
+        io.emit("itemPickedUp", itemId);
+        respawnItem(pickedUpItemType);
+        saveAndSyncInventory(socket, player);
+        return;
+    }
+
+    socket.emit("infoMessage", "L'inventaire est plein.");
+}
+
+function onDropItem(socket, slotIndex) {
+    const player = players[socket.id];
+    if (!player || slotIndex < 0 || slotIndex >= player.inventory.length) return;
+
+    const slot = player.inventory[slotIndex];
+    if (!slot) return;
+
+    world.addItemToWorld(slot, { x: player.x, y: player.y, z: player.z });
+
+    slot.quantity--;
+    if (slot.quantity <= 0) {
+        player.inventory[slotIndex] = null;
+    }
+
+    saveAndSyncInventory(socket, player);
+}
+
+function onMoveItem(socket, { fromIndex, toIndex }) {
+    const player = players[socket.id];
+    if (!player || fromIndex < 0 || fromIndex >= player.inventory.length || toIndex < 0 || toIndex >= player.inventory.length || fromIndex === toIndex) {
+        return;
+    }
+
+    const fromSlot = player.inventory[fromIndex];
+    const toSlot = player.inventory[toIndex];
+
+    if (!fromSlot) return;
+
+    if (toSlot === null) {
+        player.inventory[toIndex] = fromSlot;
+        player.inventory[fromIndex] = null;
+    } else if (toSlot.type === fromSlot.type && toSlot.quantity < MAX_STACK_SIZE) {
+        const canAdd = MAX_STACK_SIZE - toSlot.quantity;
+        const amountToMove = Math.min(fromSlot.quantity, canAdd);
+        toSlot.quantity += amountToMove;
+        fromSlot.quantity -= amountToMove;
+        if (fromSlot.quantity <= 0) {
+            player.inventory[fromIndex] = null;
+        }
+    } else {
+        player.inventory[toIndex] = fromSlot;
+        player.inventory[fromIndex] = toSlot;
+    }
+
+    saveAndSyncInventory(socket, player);
+}
+
+module.exports = {
+    onPlayerConnected,
+    onPlayerDisconnected,
+    onPlayerMovement,
+    onPickupItem,
+    onDropItem,
+    onMoveItem
+};

@@ -28,6 +28,10 @@ function setLocalPlayerId(id) {
     localPlayerId = id;
 }
 
+function getLocalPlayerId() {
+    return localPlayerId;
+}
+
 function addPlayer(playerInfo) {
     // FIX: Use the model field directly from the server data.
     const modelUrl = `/toon/${playerInfo.model}`;
@@ -137,6 +141,7 @@ export const PlayerManager = {
     updatePlayerPosition,
     removePlayer,
     setLocalPlayerId,
+    getLocalPlayerId,
     getLocalPlayer,
     getThirdPersonController,
     update

@@ -1,33 +1,36 @@
-const jwt = require("jsonwebtoken");
 const world = require("./world");
 const player = require("./player");
 
-const jwtSecret = process.env.JWT_SECRET;
-
-function initGame(io) {
-	// Middleware d'authentification Socket.IO
-	io.use((socket, next) => {
-		const token = socket.handshake.auth.token;
-		if (!token) {
-			return next(new Error("Authentication error"));
-		}
-		jwt.verify(token, jwtSecret, (err, decoded) => {
-			if (err) {
-				return next(new Error("Authentication error"));
-			}
-			const characterId = socket.handshake.auth.characterId;
-			if (!characterId) {
-				return next(new Error("Missing characterId"));
-			}
-			socket.userId = decoded.userId;
-			socket.characterId = characterId;
-			next();
-		});
-	});
-
-    // Initialiser les modules de jeu
-    world.init(io);
-    player.init(io, world.worldItems);
+function onPlayerConnected(socket) {
+    player.onPlayerConnected(socket, world.worldItems);
 }
 
-module.exports = { initGame };
+function onPlayerDisconnected(socket) {
+    player.onPlayerDisconnected(socket);
+}
+
+function onPlayerMovement(socket, movementData) {
+    player.onPlayerMovement(socket, movementData);
+}
+
+function onPickupItem(io, socket, itemId) {
+    player.onPickupItem(io, socket, itemId);
+}
+
+function onDropItem(socket, slotIndex) {
+    player.onDropItem(socket, slotIndex);
+}
+
+function onMoveItem(socket, { fromIndex, toIndex }) {
+    player.onMoveItem(socket, { fromIndex, toIndex });
+}
+
+
+module.exports = {
+    onPlayerConnected,
+    onPlayerDisconnected,
+    onPlayerMovement,
+    onPickupItem,
+    onDropItem,
+    onMoveItem
+};

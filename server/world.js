@@ -49,8 +49,26 @@ function init(socketIo) {
     console.log(`Initial world populated with ${worldItems.length} items.`);
 }
 
+function addItemToWorld(item, position) {
+    itemCounter++;
+    const newItem = {
+        ...item,
+        id: itemCounter,
+        x: position.x,
+        y: position.y,
+        z: position.z,
+    };
+    worldItems.push(newItem);
+    if (io) {
+        io.emit("itemSpawned", newItem);
+        console.log(`Added a ${newItem.type} to the world.`);
+    }
+    return newItem;
+}
+
 module.exports = {
     init,
     worldItems,
     respawnItem,
+    addItemToWorld,
 };
