@@ -334,24 +334,3 @@ body {
 	z-index: 1100;
 	pointer-events: none;
 }
-
-/* Style for links to look like buttons */
-.button-link {
-    display: inline-block;
-    padding: 12px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white !important; /* Important to override default link color */
-    cursor: pointer;
-    font-size: 16px;
-    text-align: center;
-    text-decoration: none;
-    transition: background-color 0.3s;
-}
-
-.button-link:hover {
-    background-color: #0056b3;
-    text-decoration: none;
-}

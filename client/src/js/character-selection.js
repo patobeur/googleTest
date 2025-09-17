@@ -12,8 +12,7 @@ let characterSelectionContainer, characterList, authContainer, gameContainer,
 function renderCharacters(characters) {
     characterList.innerHTML = "";
     if (characters.length === 0) {
-        // If no characters, show the creation form automatically
-        showCreationButton.style.display = 'none'; // Hide the button
+        showCreationButton.style.display = 'none';
         creationForm.style.display = 'block';
     } else {
         showCreationButton.style.display = 'inline-block';
@@ -24,22 +23,35 @@ function renderCharacters(characters) {
         const characterCard = document.createElement("div");
         characterCard.className = "character-card";
         characterCard.dataset.characterId = character.id;
+
+        const inventoryListHtml = character.inventory && character.inventory.length > 0
+            ? character.inventory.map(item => `<li>${item.item_type} <span>(x${item.quantity})</span></li>`).join('')
+            : '<li>Inventaire vide</li>';
+
         characterCard.innerHTML = `
-            <h3>${character.name}</h3>
-            <p>Classe: ${character.class}</p>
-            <p>Niveau: ${character.level}</p>
-            <p>Genre: ${character.gender}</p>
-            <p>Modèle: ${character.model.split('.')[0]}</p>
-            <div class="color-swatch-container">
-                <span>Couleur:</span>
-                <div class="color-swatch" style="background-color: ${character.color};"></div>
+            <div class="avatar-placeholder">Avatar</div>
+            <div class="character-info">
+                <h2>${character.name}</h2>
+                <div class="details">
+                    <p><strong>Niveau:</strong> ${character.level}</p>
+                    <p><strong>Expérience:</strong> ${character.xp_point} XP</p>
+                    <p><strong>Classe:</strong> ${character.class}</p>
+                    <p><strong>Modèle:</strong> ${character.model}</p>
+                    <p><strong>Couleur:</strong> <span class="color-swatch" style="background-color: ${character.color};"></span></p>
+                </div>
             </div>
-            <button class="play-btn">Jouer</button>
+            <div class="inventory">
+                <h3>Inventaire (20 premiers)</h3>
+                <ul class="inventory-list">
+                    ${inventoryListHtml}
+                </ul>
+            </div>
+            <button class="play-btn">Jouer avec ${character.name}</button>
         `;
 
         const playBtn = characterCard.querySelector('.play-btn');
         playBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card click event from firing
+            e.stopPropagation();
             if (onPlayCallback) {
                 hide();
                 onPlayCallback(authToken, character);
@@ -47,14 +59,18 @@ function renderCharacters(characters) {
         });
 
         characterCard.addEventListener("click", () => {
-            // Remove 'selected' from previously selected card
             const currentlySelected = document.querySelector(".character-card.selected");
             if (currentlySelected) {
                 currentlySelected.classList.remove("selected");
             }
-            // Add 'selected' to the clicked card
             characterCard.classList.add("selected");
             selectedCharacter = character;
+            // Also update the main play button if it exists
+            const mainPlayButton = document.getElementById('play-button');
+            if(mainPlayButton) {
+                mainPlayButton.disabled = false;
+                mainPlayButton.textContent = `Play as ${character.name}`;
+            }
         });
 
         characterList.appendChild(characterCard);
@@ -63,19 +79,17 @@ function renderCharacters(characters) {
 
 async function fetchCharacters() {
     try {
-        const response = await fetch('/api/characters', {
+        const response = await fetch('/api/characters/detailed', { // <-- UPDATED ENDPOINT
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
 
         if (response.status === 401 || response.status === 403) {
-            // Token is invalid or expired, force logout
             console.error("Authentication failed. Logging out.");
             logout(null);
             return;
         }
 
         if (!response.ok) {
-            // Handle other non-successful responses
             throw new Error(`Failed to fetch characters: ${response.statusText}`);
         }
 
@@ -83,7 +97,6 @@ async function fetchCharacters() {
         renderCharacters(characters);
     } catch (error) {
         console.error("Error fetching characters:", error);
-        // Optionally, display a user-friendly error message on the UI
         alert("Could not load characters. Please try logging in again.");
         logout(null);
     }
