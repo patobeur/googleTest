@@ -34,10 +34,23 @@ app.use(bodyParser.json());
 const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
 
-// Route pour la page d'accueil
+// Routes pour les pages HTML
 app.get("/", (req, res) => {
 	res.sendFile(path.join(clientPath, "index.html"));
 });
+
+app.get("/login", (req, res) => {
+    res.sendFile(path.join(clientPath, "login.html"));
+});
+
+app.get("/character-selection", (req, res) => {
+    res.sendFile(path.join(clientPath, "character-selection.html"));
+});
+
+app.get("/game", (req, res) => {
+    res.sendFile(path.join(clientPath, "game.html"));
+});
+
 
 // Routes d'authentification
 const authRoutes = require("./auth");

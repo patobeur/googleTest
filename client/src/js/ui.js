@@ -1,6 +1,5 @@
 // client/ui.js
-import { logout } from "./logout.js";
-import { CharacterSelection } from "./character-selection.js";
+import { AuthService } from "./auth.js";
 
 // --- Menu, Modals, and Theme ---
 const menuIcon = document.getElementById("menu-icon");
@@ -255,7 +254,11 @@ function init(socket) {
 
 	logoutLink.addEventListener("click", (e) => {
 		e.preventDefault();
-		logout(gameSocket);
+        AuthService.logout();
+        if (gameSocket && gameSocket.connected) {
+            gameSocket.disconnect();
+        }
+        window.location.href = '/';
 	});
 
 	closeBtns.forEach((btn) => {
