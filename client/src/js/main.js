@@ -11,8 +11,11 @@ import { SocketManager } from "./socket-manager.js";
 
 // Game Logic (to be initialized after login)
 function initializeGame(token, character) {
-	// Show the game container
+	// Hide character selection and show the game container
+	document.getElementById("character-selection-container").style.display = "none";
 	document.getElementById("game-container").style.display = "block";
+	document.body.classList.add("game-active");
+
 
 	// 1. Initialisation des modules
 	ThreeScene.init(document.getElementById("game-canvas"));

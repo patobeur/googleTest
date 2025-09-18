@@ -27,3 +27,4 @@ database.sqlite
 
 # Lock files
 server/package-lock.json
+package-lock.json

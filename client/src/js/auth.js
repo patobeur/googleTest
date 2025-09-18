@@ -13,7 +13,7 @@ function showForm(formToShow) {
 	registerForm.style.display = "none";
 	forgotPasswordForm.style.display = "none";
 	resetPasswordForm.style.display = "none";
-	authContainer.style.display = "block";
+	// authContainer.style.display = "block";
 	gameContainer.style.display = "none";
 	formToShow.style.display = "block";
 }
