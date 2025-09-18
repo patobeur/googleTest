@@ -1,0 +1,4 @@
+/* Styles specific to the active game view */
+body.game-active {
+    overflow: hidden;
+}
