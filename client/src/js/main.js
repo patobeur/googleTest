@@ -1,28 +1,18 @@
-// client/main.js
-
 import * as THREE from "three";
 import { ThreeScene } from "./three-scene.js";
 import { PlayerManager } from "./player-manager.js";
 import { UserInput } from "./user-input.js";
-import { Auth } from "./auth.js";
 import { UI } from "./ui.js";
-import { CharacterSelection } from "./character-selection.js";
 import { SocketManager } from "./socket-manager.js";
 
-// Game Logic (to be initialized after login)
 function initializeGame(token, character) {
-	// Hide character selection and show the game container
-	document.getElementById("character-selection-container").style.display = "none";
-	document.getElementById("game-container").style.display = "block";
+    document.getElementById('game-container').style.display = 'block';
 	document.body.classList.add("game-active");
 
-
-	// 1. Initialisation des modules
 	ThreeScene.init(document.getElementById("game-canvas"));
 	UserInput.init();
 	SocketManager.initSocket(token, character);
 
-	// Pass socket to UI module and initialize inventory
 	const socket = SocketManager.getSocket();
 	UI.init(socket);
 
@@ -44,7 +34,6 @@ function initializeGame(token, character) {
 		socket.emit("moveItem", { fromIndex, toIndex });
 	});
 
-    // State to prevent sending data on every frame
     const lastSent = {
         position: new THREE.Vector3(),
         quaternion: new THREE.Quaternion(),
@@ -56,7 +45,6 @@ function initializeGame(token, character) {
     };
 
 	function gameLogic() {
-        // This function sends the local player's state to the server.
         const localPlayer = PlayerManager.getLocalPlayer();
 		if (!localPlayer || !localPlayer.character) {
             return;
@@ -75,7 +63,7 @@ function initializeGame(token, character) {
         if (positionChanged || rotationChanged || animationChanged) {
             const movementData = {
                 x: currentPosition.x,
-                y: currentPosition.z, // Server expects z as y
+                y: currentPosition.z,
                 rotation: {
                     x: currentQuaternion.x,
                     y: currentQuaternion.y,
@@ -107,11 +95,22 @@ function initializeGame(token, character) {
 	ThreeScene.animate(gameLogic);
 }
 
-// --- Main Execution ---
 function main() {
-	// The new flow: Auth -> CharacterSelection -> Game
-	CharacterSelection.init(initializeGame);
-	Auth.init(CharacterSelection.show);
+    const token = localStorage.getItem('token');
+    const characterData = localStorage.getItem('selectedCharacter');
+
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
+    if (!characterData) {
+        window.location.href = '/character-selection';
+        return;
+    }
+
+    const character = JSON.parse(characterData);
+    initializeGame(token, character);
 }
 
 window.addEventListener("DOMContentLoaded", main);
