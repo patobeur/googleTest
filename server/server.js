@@ -1,7 +1,7 @@
 // server/server.js
 require('dotenv').config();
 
-const requiredEnvVars = ['JWT_SECRET', 'SMTP_PASS'];
+const requiredEnvVars = ['JWT_SECRET'];
 for (const varName of requiredEnvVars) {
     if (!process.env[varName]) {
         console.error(`Error: Missing required environment variable '${varName}'.`);
