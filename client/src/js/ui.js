@@ -36,6 +36,32 @@ function setOnMoveItem(callback) {
 }
 
 // Draggable window logic
+function makeResizable(element, handle) {
+    let initialWidth, initialHeight, initialMouseX, initialMouseY;
+
+    handle.onmousedown = function(e) {
+        e.preventDefault();
+        initialWidth = element.offsetWidth;
+        initialHeight = element.offsetHeight;
+        initialMouseX = e.clientX;
+        initialMouseY = e.clientY;
+        document.onmousemove = resizeElement;
+        document.onmouseup = stopResize;
+    };
+
+    function resizeElement(e) {
+        const dx = e.clientX - initialMouseX;
+        const dy = e.clientY - initialMouseY;
+        element.style.width = (initialWidth + dx) + 'px';
+        element.style.height = (initialHeight + dy) + 'px';
+    }
+
+    function stopResize() {
+        document.onmousemove = null;
+        document.onmouseup = null;
+    }
+}
+
 function makeDraggable(element, handle) {
 	let pos1 = 0,
 		pos2 = 0,
@@ -69,6 +95,23 @@ function makeDraggable(element, handle) {
 
 function openInventory() {
 	inventoryContainer.style.display = "flex";
+    setInitialInventorySize();
+}
+
+function setInitialInventorySize() {
+    const isPortrait = window.innerHeight > window.innerWidth;
+    if (isPortrait) {
+        inventoryContainer.style.width = `${(1/3) * 100}vw`;
+        inventoryContainer.style.height = `${(1/5) * 100}vh`;
+    } else {
+        inventoryContainer.style.width = `${(1/5) * 100}vw`;
+        inventoryContainer.style.height = `${(1/3) * 100}vh`;
+    }
+    // Ensure position is correct after size change
+    inventoryContainer.style.bottom = '20px';
+    inventoryContainer.style.right = '20px';
+    inventoryContainer.style.top = 'auto';
+    inventoryContainer.style.left = 'auto';
 }
 
 function closeInventory() {
@@ -84,6 +127,7 @@ const itemColors = {
 
 function updateInventory(inventory) {
 	inventorySlots.innerHTML = "";
+
 	if (!inventory) return;
 
 	for (let i = 0; i < inventory.length; i++) {
@@ -102,6 +146,8 @@ function updateInventory(inventory) {
 			itemDiv.draggable = true;
 			// No item.id on the slot object anymore, this can be removed.
 			// itemDiv.dataset.itemId = slotData.item.id;
+
+            itemDiv.addEventListener("click", () => openItemActionModal(slotData));
 
 			itemDiv.addEventListener("dragstart", (e) => {
 				e.dataTransfer.setData("text/plain", JSON.stringify({ fromIndex: i }));
@@ -179,6 +225,31 @@ document.body.addEventListener("drop", (e) => {
 		}
 	}
 });
+
+const itemActionModal = document.getElementById("item-action-modal");
+const itemModalClose = document.getElementById("item-modal-close");
+const itemModalDetails = document.getElementById("item-modal-details");
+
+function openItemActionModal(itemData) {
+    const details = itemDetails[itemData.type];
+    if (!details) return;
+
+    const color = itemColors[itemData.type] || '#ff9800';
+    const hexColor = `#${color.toString(16).padStart(6, "0")}`;
+
+    itemModalDetails.innerHTML = `
+        <div class="item-icon-display" style="background-color: ${hexColor};"></div>
+        <h4>${details.name}</h4>
+        <p>Quantity: ${itemData.quantity}</p>
+        <p><em>${details.description}</em></p>
+    `;
+
+    itemActionModal.style.display = 'flex';
+}
+
+function closeItemActionModal() {
+    itemActionModal.style.display = 'none';
+}
 
 // Theme switcher
 function applyTheme(theme) {
@@ -273,7 +344,12 @@ function init(socket) {
 				closeModal(modal);
 			}
 		});
+        if (e.target === itemActionModal) {
+            closeItemActionModal();
+        }
 	});
+
+    itemModalClose.addEventListener("click", closeItemActionModal);
 
 	// Profile form submission
 	const profileForm = document.getElementById("profile-form");
@@ -315,6 +391,11 @@ function init(socket) {
 		inventoryContainer,
 		inventoryContainer.querySelector(".inventory-header")
 	);
+
+    makeResizable(
+        inventoryContainer,
+        inventoryContainer.querySelector(".inventory-resize-handle")
+    );
 
 	// Drag and drop for inventory slots
 	inventorySlots.addEventListener("dragover", (e) => {
