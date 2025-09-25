@@ -1,20 +1,22 @@
 // server/server.js
-require('dotenv').config();
+require("dotenv").config();
 
-const requiredEnvVars = ['JWT_SECRET', 'SMTP_PASS'];
+const requiredEnvVars = ["JWT_SECRET"];
 for (const varName of requiredEnvVars) {
-    if (!process.env[varName]) {
-        console.error(`Error: Missing required environment variable '${varName}'.`);
-        console.error("Please create a .env file with the required variables.");
-        process.exit(1);
-    }
+	if (!process.env[varName]) {
+		console.error(
+			`Error: Missing required environment variable '${varName}'.`
+		);
+		console.error("Please create a .env file with the required variables.");
+		process.exit(1);
+	}
 }
 const http = require("http");
 const path = require("path");
 const express = require("express");
 const socketIO = require("socket.io");
 const bodyParser = require("body-parser");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const { initSocketEvents } = require("./socket-events.js");
 const world = require("./world.js");
 require("./db.js"); // This will run the db serialization logic
@@ -40,17 +42,16 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-    res.sendFile(path.join(clientPath, "login.html"));
+	res.sendFile(path.join(clientPath, "login.html"));
 });
 
 app.get("/character-selection", (req, res) => {
-    res.sendFile(path.join(clientPath, "character-selection.html"));
+	res.sendFile(path.join(clientPath, "character-selection.html"));
 });
 
 app.get("/game", (req, res) => {
-    res.sendFile(path.join(clientPath, "game.html"));
+	res.sendFile(path.join(clientPath, "game.html"));
 });
-
 
 // Routes d'authentification
 const authRoutes = require("./auth");
