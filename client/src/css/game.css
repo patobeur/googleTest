@@ -119,8 +119,11 @@ body.game-active {
 
 .inventory-slots {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 10px;
+    max-height: 240px; /* Adjust as needed, e.g., for 3 rows */
+    overflow-y: auto;
+    padding-right: 5px; /* Space for the scrollbar */
 }
 
 .inventory-slot {
