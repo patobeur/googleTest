@@ -127,9 +127,6 @@ const itemColors = {
 
 function updateInventory(inventory) {
 	inventorySlots.innerHTML = "";
-    const itemIcon = document.getElementById("item-icon");
-    const itemName = document.getElementById("item-name");
-    const itemDescription = document.getElementById("item-description");
 
 	if (!inventory) return;
 
@@ -150,14 +147,7 @@ function updateInventory(inventory) {
 			// No item.id on the slot object anymore, this can be removed.
 			// itemDiv.dataset.itemId = slotData.item.id;
 
-            itemDiv.addEventListener("click", () => {
-                const details = itemDetails[slotData.type];
-                if (details) {
-                    itemIcon.style.backgroundColor = `#${color.toString(16).padStart(6, "0")}`;
-                    itemName.textContent = details.name;
-                    itemDescription.textContent = details.description;
-                }
-            });
+            itemDiv.addEventListener("click", () => openItemActionModal(slotData));
 
 			itemDiv.addEventListener("dragstart", (e) => {
 				e.dataTransfer.setData("text/plain", JSON.stringify({ fromIndex: i }));
@@ -235,6 +225,31 @@ document.body.addEventListener("drop", (e) => {
 		}
 	}
 });
+
+const itemActionModal = document.getElementById("item-action-modal");
+const itemModalClose = document.getElementById("item-modal-close");
+const itemModalDetails = document.getElementById("item-modal-details");
+
+function openItemActionModal(itemData) {
+    const details = itemDetails[itemData.type];
+    if (!details) return;
+
+    const color = itemColors[itemData.type] || '#ff9800';
+    const hexColor = `#${color.toString(16).padStart(6, "0")}`;
+
+    itemModalDetails.innerHTML = `
+        <div class="item-icon-display" style="background-color: ${hexColor};"></div>
+        <h4>${details.name}</h4>
+        <p>Quantity: ${itemData.quantity}</p>
+        <p><em>${details.description}</em></p>
+    `;
+
+    itemActionModal.style.display = 'flex';
+}
+
+function closeItemActionModal() {
+    itemActionModal.style.display = 'none';
+}
 
 // Theme switcher
 function applyTheme(theme) {
@@ -329,7 +344,12 @@ function init(socket) {
 				closeModal(modal);
 			}
 		});
+        if (e.target === itemActionModal) {
+            closeItemActionModal();
+        }
 	});
+
+    itemModalClose.addEventListener("click", closeItemActionModal);
 
 	// Profile form submission
 	const profileForm = document.getElementById("profile-form");
