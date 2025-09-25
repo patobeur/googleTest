@@ -1,7 +1,11 @@
 // server/server.js
 require("dotenv").config();
 
+<<<<<<< HEAD
 const requiredEnvVars = ["JWT_SECRET"];
+=======
+const requiredEnvVars = ['JWT_SECRET'];
+>>>>>>> ae1a1b390234f774ea9c39d50385a0747017c8c6
 for (const varName of requiredEnvVars) {
 	if (!process.env[varName]) {
 		console.error(
