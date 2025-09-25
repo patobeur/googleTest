@@ -3,96 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project World RPG - Home</title>
+    <title>Game Homepage</title>
     <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
-
-    <header>
-        <div class="logo">
-            <a href="/">World RPG</a>
+    <h1>Welcome to the Game</h1>
+    <nav>
+        <div id="guest-links">
+            <a href="/login">Login</a>
+            <a href="/login">Register</a>
         </div>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="#features" class="active">Features</a></li>
-                <li><a href="#roadmap">Roadmap</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="/login.html">Login</a></li>
-            </ul>
-        </nav>
-        <div class="menu-toggle">
-            <span></span>
-            <span></span>
-            <span></span>
+        <div id="user-links" style="display: none;">
+            <a href="/character-selection">Play</a>
+            <button id="logout-button">Logout</button>
         </div>
-    </header>
+    </nav>
 
-    <main>
-        <section class="hero">
-            <div class="hero-content">
-                <h1>Forge Your Own Adventure</h1>
-                <p>An open-source, 3D mini-RPG where your creativity shapes the world. Built for communities, educators, and indie game lovers.</p>
-                <a href="/character-selection.html" class="cta-button">Start Your Journey</a>
-            </div>
-        </section>
-
-        <section id="features">
-            <h2>Core Features</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h3>Character Personalization</h3>
-                    <p>Choose your 3D model and name. See your unique character come to life in the game world, just as you designed it.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Dynamic Inventory</h3>
-                    <p>Manage your items with a flexible inventory system. Drag, drop, and even place objects directly into the game world.</p>
-                </div>
-                <div class="feature-card">
-                    <h3>Physics-Driven World</h3>
-                    <p>Experience a more realistic world with integrated physics for objects and players, including gravity and collision detection.</p>
-                </div>
-                 <div class="feature-card">
-                    <h3>Community & LAN Play</h3>
-                    <p>Host your own server and play with friends on a local network. You own the game, you make the rules.</p>
-                </div>
-            </div>
-        </section>
-
-        <section id="roadmap">
-            <h2>Development Roadmap</h2>
-            <p>We believe in transparent development. Here's a glimpse of what's coming next:</p>
-            <ul>
-                <li><strong>Phase 1: Enhanced Player Experience</strong> - Improving inventory management and character customization.</li>
-                <li><strong>Phase 2 & 3: Realistic Physics Engine</strong> - Introducing gravity, collisions for objects, and player physics for deeper immersion.</li>
-                <li><strong>Phase 4: Advanced Player Interactions</strong> - Implementing player-to-player collision management.</li>
-                <li><strong>Phase 5: A Richer World</strong> - Adding NPCs, quests, and direct player-to-player trading.</li>
-                <li><strong>Long-Term Vision:</strong> A world-building tool for non-developers and migration to a more robust database.</li>
-            </ul>
-        </section>
-
-        <section id="about">
-            <h2>About The Project</h2>
-            <p>World RPG started as a passion project to create a lightweight, self-hostable MMORPG experience. It's built on the idea that players should have true ownership of their game worlds. Whether you're an indie developer looking for a foundation, a teacher creating an interactive lesson, or a group of friends wanting a private LAN adventure, this project is for you.</p>
-            <p>We are open-source and community-driven. Your feedback and contributions can help shape the future of this ever-evolving universe.</p>
-        </section>
-    </main>
-
-    <footer>
-        <div class="footer-links">
-            <a href="#">GitHub</a>
-            <a href="#">Discord</a>
-            <a href="#">Documentation</a>
-        </div>
-        <p>&copy; 2024 World RPG Project. All rights reserved.</p>
-    </footer>
-
-    <script>
-        const menuToggle = document.querySelector('.menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        menuToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-    </script>
+    <script type="module" src="src/js/homepage.js"></script>
 </body>
 </html>

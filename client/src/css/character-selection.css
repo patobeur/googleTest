@@ -1,0 +1,121 @@
+/* Styles for the character selection screen */
+#character-selection-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#character-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.character-card {
+    background-color: var(--modal-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    width: 250px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.character-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.character-card h3 {
+    margin-top: 0;
+    color: var(--text-color);
+}
+
+.character-card p {
+    margin: 5px 0;
+}
+
+.character-card .color-swatch {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    margin-top: 10px;
+}
+
+.character-card .play-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.character-card .play-btn:hover {
+    background-color: #0056b3;
+}
+
+.character-card.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+    transform: translateY(-5px) scale(1.02);
+}
+
+.color-swatch-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#character-selection-container h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: var(--text-color);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+#show-character-creation-button,
+#quit-button {
+    padding: 12px 25px;
+    font-size: 1em;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    margin: 10px;
+}
+
+#show-character-creation-button {
+    background-color: #28a745;
+    color: white;
+}
+
+#show-character-creation-button:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+#quit-button {
+    background-color: #dc3545;
+    color: white;
+}
+
+#quit-button:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}

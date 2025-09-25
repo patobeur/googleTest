@@ -3,80 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - World RPG</title>
+    <title>Login</title>
     <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
-
-    <header>
-        <div class="logo">
-            <a href="/">World RPG</a>
+    <div id="auth-container">
+        <div id="login-form">
+            <h2>Login</h2>
+            <input type="email" id="login-email" placeholder="Email" />
+            <input type="password" id="login-password" placeholder="Password" />
+            <button id="login-button">Login</button>
+            <p><a href="#" id="show-forgot-password">Forgot password?</a></p>
+            <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
         </div>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="/#features">Features</a></li>
-                <li><a href="/#roadmap">Roadmap</a></li>
-                <li><a href="/#about">About</a></li>
-                <li><a href="/login.html" class="active">Login</a></li>
-            </ul>
-        </nav>
-        <div class="menu-toggle">
-            <span></span>
-            <span></span>
-            <span></span>
+        <div id="register-form" style="display: none">
+            <h2>Register</h2>
+            <input type="text" id="register-name" placeholder="Name" />
+            <input type="email" id="register-email" placeholder="Email" />
+            <input type="password" id="register-password" placeholder="Password" />
+            <button id="register-button">Register</button>
+            <p>Already have an account? <a href="#" id="show-login-from-register">Login</a></p>
         </div>
-    </header>
-
-    <main>
-        <div id="auth-container">
-            <div id="login-form">
-                <h2>Login</h2>
-                <input type="email" id="login-email" placeholder="Email" />
-                <input type="password" id="login-password" placeholder="Password" />
-                <button id="login-button">Login</button>
-                <p><a href="#" id="show-forgot-password">Forgot password?</a></p>
-                <p>Don't have an account? <a href="#" id="show-register">Register</a></p>
-            </div>
-            <div id="register-form" style="display: none">
-                <h2>Register</h2>
-                <input type="text" id="register-name" placeholder="Name" />
-                <input type="email" id="register-email" placeholder="Email" />
-                <input type="password" id="register-password" placeholder="Password" />
-                <button id="register-button">Register</button>
-                <p>Already have an account? <a href="#" id="show-login-from-register">Login</a></p>
-            </div>
-            <div id="forgot-password-form" style="display: none">
-                <h2>Forgot Password</h2>
-                <input type="email" id="forgot-email" placeholder="Email" />
-                <button id="forgot-button">Send Reset Token</button>
-                <p><a href="#" id="show-login-from-forgot">Back to Login</a></p>
-            </div>
-            <div id="reset-password-form" style="display: none">
-                <h2>Reset Password</h2>
-                <input type="text" id="reset-token" placeholder="Reset Token" />
-                <input type="password" id="reset-password" placeholder="New Password" />
-                <button id="reset-button">Reset Password</button>
-            </div>
+        <div id="forgot-password-form" style="display: none">
+            <h2>Forgot Password</h2>
+            <input type="email" id="forgot-email" placeholder="Email" />
+            <button id="forgot-button">Send Reset Token</button>
+            <p><a href="#" id="show-login-from-forgot">Back to Login</a></p>
         </div>
-    </main>
-
-    <footer>
-        <div class="footer-links">
-            <a href="#">GitHub</a>
-            <a href="#">Discord</a>
-            <a href="#">Documentation</a>
+        <div id="reset-password-form" style="display: none">
+            <h2>Reset Password</h2>
+            <input type="text" id="reset-token" placeholder="Reset Token" />
+            <input type="password" id="reset-password" placeholder="New Password" />
+            <button id="reset-button">Reset Password</button>
         </div>
-        <p>&copy; 2024 World RPG Project. All rights reserved.</p>
-    </footer>
-
+    </div>
     <script type="module" src="src/js/login-page.js"></script>
-    <script>
-        const menuToggle = document.querySelector('.menu-toggle');
-        const navLinks = document.querySelector('.nav-links');
-
-        menuToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-    </script>
 </body>
 </html>
